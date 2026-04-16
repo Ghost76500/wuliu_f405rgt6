@@ -1,0 +1,24 @@
+#ifndef GIMBAL_BEHAVIOUR_H
+#define GIMBAL_BEHAVIOUR_H
+
+// 底盘行为枚举
+typedef enum
+{
+    GIMBAL_INIT = 0,
+    GIMBAL_STANDBY,
+    GIMBAL_READ_MATERIALS,
+    GIMBAL_READ_COLORS,
+    GIMBAL_THROW_MATERIALS,
+    GIMBAL_PICK_MATERIALS,
+    GIMBAL_CALIBRATE,
+
+
+} behaviour_state_e;
+
+
+
+
+
+
+
+#endif

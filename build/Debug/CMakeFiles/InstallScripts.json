@@ -1,0 +1,8 @@
+{
+	"InstallScripts" : 
+	[
+		"E:/STM32VSCode/wuliu_f405rgt6/build/Debug/cmake_install.cmake",
+		"E:/STM32VSCode/wuliu_f405rgt6/build/Debug/cmake/stm32cubemx/cmake_install.cmake"
+	],
+	"Parallel" : false
+}
