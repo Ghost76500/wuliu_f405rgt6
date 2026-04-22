@@ -23,6 +23,6 @@
 extern void bsp_servo_pwm_init(void);
 extern void bsp_gimbal_angle_set(uint16_t duty);
 extern void bsp_gripper_state_set(uint16_t duty);
-
+extern void bsp_test_angle_set(uint16_t duty);
 
 #endif /* __BSP_SERVO_PWM_H */

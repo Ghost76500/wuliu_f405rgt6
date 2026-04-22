@@ -28,6 +28,10 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "bsp_buzzer_pwm.h"
+#include "bsp_can.h"
+#include "bsp_servo_pwm.h"
+#include "OLED.h"
 
 /* USER CODE END Includes */
 
@@ -105,6 +109,11 @@ int main(void)
   MX_I2C2_Init();
   MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
+  buzzer_init();
+  can_filter_init();
+  bsp_servo_pwm_init();
+  OLED_Init();
+
   
   /* USER CODE END 2 */
 

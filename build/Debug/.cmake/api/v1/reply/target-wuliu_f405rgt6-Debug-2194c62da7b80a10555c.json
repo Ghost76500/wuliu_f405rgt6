@@ -206,7 +206,8 @@
 				40,
 				41,
 				42,
-				43
+				43,
+				44
 			]
 		},
 		{
@@ -400,7 +401,8 @@
 				40,
 				41,
 				42,
-				43
+				43,
+				44
 			]
 		},
 		{
@@ -414,7 +416,6 @@
 			"name" : "Object Libraries",
 			"sourceIndexes" : 
 			[
-				44,
 				45,
 				46,
 				47,
@@ -443,7 +444,8 @@
 				70,
 				71,
 				72,
-				73
+				73,
+				74
 			]
 		}
 	],
@@ -548,6 +550,12 @@
 		{
 			"backtrace" : 8,
 			"compileGroupIndex" : 0,
+			"path" : "User/X_V2.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 8,
+			"compileGroupIndex" : 0,
 			"path" : "User/command.c",
 			"sourceGroupIndex" : 0
 		},
@@ -608,6 +616,12 @@
 		{
 			"backtrace" : 8,
 			"compileGroupIndex" : 0,
+			"path" : "Application/key_task.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 8,
+			"compileGroupIndex" : 0,
 			"path" : "Application/main_task.c",
 			"sourceGroupIndex" : 0
 		},
@@ -633,12 +647,6 @@
 			"backtrace" : 8,
 			"compileGroupIndex" : 0,
 			"path" : "Application/uart_rx_task.c",
-			"sourceGroupIndex" : 0
-		},
-		{
-			"backtrace" : 8,
-			"compileGroupIndex" : 0,
-			"path" : "Application/visual_task.c",
 			"sourceGroupIndex" : 0
 		},
 		{

@@ -11,6 +11,7 @@ void uart_rx_task(void *argument)
     
     for (;;)
     {
+        /*
         //if (xQueueReceive(global_uart_queueHandle, &recv_msg, 100) == pdTRUE) 
         {
             // 根据包裹上的“发件人”标签，交给不同的部门去解包
@@ -28,6 +29,7 @@ void uart_rx_task(void *argument)
             }
             
         }
-        
+        */
+       osDelay(5);
     }
 }

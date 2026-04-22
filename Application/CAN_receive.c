@@ -2,9 +2,12 @@
 #include "bsp_can.h"
 #include "bsp_led.h"
 #include "position_task.h"
+#include "X_V2.h"
+#include "struct_typedef.h"
 
 
-extern CAN_HandleTypeDef hcan;
+extern CAN_HandleTypeDef hcan1;
+extern CAN_HandleTypeDef hcan2;
 // 发送配置结构体（发送时的快递单）
 CAN_TxHeaderTypeDef TxHeader;
 // 接收配置结构体（接收到的快递单详情）
@@ -23,6 +26,8 @@ volatile float can_gyro_yaw_rad = 0.0f;
 volatile float can_distence_x_m = 0.0f;
 volatile float can_distence_y_m = 0.0f;
 volatile uint8_t can_odom_new_data_flag = 0;
+
+volatile float vel = 0.0f, Motor_Vel = 0.0f;
 
 // 协议约定：yaw_raw 取值大约在 [-31415, +31415]，表示 [-3.1415, +3.1415] rad 的 1e4 放大。
 // 如你的上位机/陀螺仪发送端使用不同缩放，请同步修改该比例。
@@ -54,7 +59,7 @@ void BSP_CAN_Send_Msg(uint32_t std_id, uint8_t *data)
 
     // 3. 发送
     // 注意：这里要用 hcan (看你第18行extern的是 hcan 还是 hcan1，要保持一致)
-    if (HAL_CAN_AddTxMessage(&hcan, &TxHeader, TxData, &TxMailbox) != HAL_OK)
+    if (HAL_CAN_AddTxMessage(&hcan2, &TxHeader, TxData, &TxMailbox) != HAL_OK)
     {
         // 这里可以加错误处理
         bsp_led_toggle(CORE_THREE);
@@ -64,33 +69,145 @@ void BSP_CAN_Send_Msg(uint32_t std_id, uint8_t *data)
 // CAN 接收中断回调函数
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 {
-
-    // 从 FIFO0 读取数据
-    // 参数：CAN句柄, FIFO号, 接收头指针(存ID等信息), 数据缓存指针
-    HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &RxHeader, RxData);
-    
-    //bsp_led_toggle(CORE_TWO);
-    // --- 在这里处理你的业务逻辑 ---
-      
-    // 比如：判断 ID 是不是 0x101
-    if (RxHeader.StdId == 0x200) 
+    if (hcan->Instance == CAN1)
     {
-        uint8_t cmd[8] = {0};
-        for (int i=0; i<6; i++)
+        if (HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &RxHeader, RxData) != HAL_OK)
         {
-            cmd[i] = RxData[i];
+            return; // 接收出错，直接返回
+        }
+        //bsp_led_toggle(CORE_TWO);
+        if (RxHeader.StdId == CAN_OPS_ID) 
+        {
+            uint8_t cmd[8] = {0};
+            for (int i=0; i<6; i++)
+            {
+                cmd[i] = RxData[i];
+            }
+        
+        
+            int16_t yaw_raw = (int16_t)((cmd[0] << 8) | cmd[1]);
+            can_gyro_yaw_rad = ((float)yaw_raw) * CAN_GYRO_YAW_SCALE;
+        
+            can_distence_y_m = (float)((int16_t)((RxData[2] << 8) | RxData[3])) * CAN_DISTENCE_SCALE; // mm to m  
+            can_distence_x_m = (float)((int16_t)((RxData[4] << 8) | RxData[5])) * CAN_DISTENCE_SCALE; // mm to m
+
+            // 标记里程计已收到新数据，供位置环做离线保护判定
+            can_odom_new_data_flag = 1;
         }
         
-        int16_t yaw_raw = (int16_t)((cmd[0] << 8) | cmd[1]);
-        can_gyro_yaw_rad = ((float)yaw_raw) * CAN_GYRO_YAW_SCALE;
-        
-        can_distence_y_m = (float)((int16_t)((RxData[2] << 8) | RxData[3])) * CAN_DISTENCE_SCALE; // mm to m  
-        can_distence_x_m = (float)((int16_t)((RxData[4] << 8) | RxData[5])) * CAN_DISTENCE_SCALE; // mm to m
-
-        // 标记里程计已收到新数据，供位置环做离线保护判定
-        can_odom_new_data_flag = 1;
-        
-        
     }
-    
+
+    if (hcan->Instance == CAN2)
+    {
+        // 1. 从 FIFO0 读取 CAN2 接收到的报文
+        if (HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &RxHeader, RxData) != HAL_OK)
+        {
+            return;
+        }
+
+        uint8_t real_motor_id = (uint8_t)((RxHeader.ExtId >> 8) & 0xFF);
+
+        // 2. 既然你确定只有扩展帧，我们直接拿 ExtId 开刀！
+        // ExtId 就是扩展帧专用的“快递单号”，这里对应你的电机 ID
+        switch(real_motor_id)
+        {
+            // 匹配你定义的四个底盘电机 ID
+            case CAN_Y42_M1_ID:
+            case CAN_Y42_M2_ID:
+            case CAN_Y42_M3_ID:
+            case CAN_Y42_M4_ID:
+            {
+                // 3. 校验数据格式：确保数据长度为 5，且帧头标志为 0x35
+                if ((RxHeader.DLC == 5) && (RxData[0] == 0x35))
+                {
+                    // 4. 解析转速绝对值 (高8位左移并与低8位拼接)
+                    vel = ((uint16_t)RxData[2] << 8) | (uint16_t)RxData[3];
+                    
+                    // 5. 将原始数据按比例转换为真实速度 (协议规定需要乘 0.1)
+                    Motor_Vel = vel * 0.1f; 
+                    
+                    // 6. 判断方向：如果 RxData[1] 不为 0，说明电机在反转
+                    if(RxData[1]) 
+                    { 
+                        Motor_Vel = -Motor_Vel; 
+                    }
+                    
+                    // （可选）如果你的架构里用到了电机结构体数组，可以在这里更新：
+                    // uint8_t motor_index = RxHeader.ExtId - CAN_Y42_M1_ID; // 算出是第几个电机(0~3)
+                    // can_y42_motor_measure[motor_index].speed_rpm = Motor_Vel;
+                    // can_y42_new_data_flag = 1;
+                }
+                break; // 处理完毕，跳出 switch
+            }
+            default:
+                // 如果收到了这四个电机以外的扩展帧（虽然你说没有，但兜底逻辑要写），直接忽略
+                break;
+        }
+    }
+
+}
+
+void can_send_chassis_speed(int16_t motor1, int16_t motor2, int16_t motor3, int16_t motor4)
+{
+    const int16_t motor_cmd[4] = {motor1, motor2, motor3, motor4};
+
+    for (uint8_t i = 0; i < 4; i++)
+    {
+        uint8_t dir = (motor_cmd[i] < 0) ? 1U : 0U;
+        X_V2_Vel_Control((uint8_t)(i + 1U), dir, 255, motor_cmd[i], 0);
+    }
+}
+
+
+/**
+	* @brief   CAN发送多个字节
+	* @param   张大头电机
+	* @retval  无
+	*/
+void can_SendCmd(__IO uint8_t *cmd, uint8_t len)
+{
+    static uint32_t TxMailbox;
+    CAN_TxHeaderTypeDef tx_header;
+    uint8_t tx_data[8] = {0};
+    __IO uint8_t i = 0, j = 0, k = 0, l = 0, packNum = 0;
+
+    if ((cmd == NULL) || (len < 2U))
+    {
+        return;
+    }
+
+    j = (uint8_t)(len - 2U);
+
+    while(i < j)
+    {
+        k = (uint8_t)(j - i);
+
+        tx_header.StdId = 0x00;
+        tx_header.ExtId = ((uint32_t)cmd[0] << 8) | (uint32_t)packNum;
+        tx_header.IDE = CAN_ID_EXT;
+        tx_header.RTR = CAN_RTR_DATA;
+        tx_header.TransmitGlobalTime = DISABLE;
+        tx_data[0] = cmd[1];
+
+        if(k < 8U)
+        {
+            for(l = 0; l < k; l++, i++)
+            {
+                tx_data[l + 1] = cmd[i + 2];
+            }
+            tx_header.DLC = (uint32_t)(k + 1U);
+        }
+        else
+        {
+            for(l = 0; l < 7U; l++, i++)
+            {
+                tx_data[l + 1] = cmd[i + 2];
+            }
+            tx_header.DLC = 8;
+        }
+
+        while(HAL_CAN_AddTxMessage(&hcan2, &tx_header, tx_data, &TxMailbox) != HAL_OK);
+
+        ++packNum;
+    }
 }

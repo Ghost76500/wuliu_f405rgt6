@@ -80,7 +80,7 @@ osThreadId_t UART_RX_TASKHandle;
 const osThreadAttr_t UART_RX_TASK_attributes = {
   .name = "UART_RX_TASK",
   .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityBelowNormal,
+  .priority = (osPriority_t) osPriorityBelowNormal2,
 };
 /* Definitions for MUSIC_TASK */
 osThreadId_t MUSIC_TASKHandle;
@@ -88,6 +88,18 @@ const osThreadAttr_t MUSIC_TASK_attributes = {
   .name = "MUSIC_TASK",
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityLow2,
+};
+/* Definitions for KEY_TASK */
+osThreadId_t KEY_TASKHandle;
+const osThreadAttr_t KEY_TASK_attributes = {
+  .name = "KEY_TASK",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityBelowNormal1,
+};
+/* Definitions for KeyQueue */
+osMessageQueueId_t KeyQueueHandle;
+const osMessageQueueAttr_t KeyQueue_attributes = {
+  .name = "KeyQueue"
 };
 
 /* Private function prototypes -----------------------------------------------*/
@@ -101,6 +113,7 @@ extern void position_task(void *argument);
 extern void main_task(void *argument);
 extern void uart_rx_task(void *argument);
 extern void music_task(void *argument);
+extern void key_task(void *argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
@@ -126,6 +139,10 @@ void MX_FREERTOS_Init(void) {
   /* start timers, add new ones, ... */
   /* USER CODE END RTOS_TIMERS */
 
+  /* Create the queue(s) */
+  /* creation of KeyQueue */
+  KeyQueueHandle = osMessageQueueNew (16, sizeof(uint8_t), &KeyQueue_attributes);
+
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
   /* USER CODE END RTOS_QUEUES */
@@ -148,6 +165,9 @@ void MX_FREERTOS_Init(void) {
 
   /* creation of MUSIC_TASK */
   MUSIC_TASKHandle = osThreadNew(music_task, NULL, &MUSIC_TASK_attributes);
+
+  /* creation of KEY_TASK */
+  KEY_TASKHandle = osThreadNew(key_task, NULL, &KEY_TASK_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */

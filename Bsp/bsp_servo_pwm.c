@@ -6,10 +6,17 @@
  */
 void bsp_servo_pwm_init(void)
 {
-    // 启动云台舵机 PWM
     HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
-    // 启动夹爪舵机 PWM
     HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2);
+    HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3);
+}
+
+void bsp_test_angle_set(uint16_t duty)
+{
+    if (duty < 500) duty = 500;
+    if (duty > 2500) duty = 2500;
+
+    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, duty);
 }
 
 
@@ -36,6 +43,6 @@ void bsp_gripper_state_set(uint16_t duty)
     if (duty < 500) duty = 500;
     if (duty > 2500) duty = 2500;
 
-    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, duty);
+    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, duty);
 }
 
