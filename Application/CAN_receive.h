@@ -10,6 +10,18 @@
 // CAN2用于控制底盘电机
 #define CHASSIS_CAN hcan2
 
+// 协议约定：yaw_raw 取值大约在 [-31415, +31415]，表示 [-3.1415, +3.1415] rad 的 1e4 放大。
+// 如你的上位机/陀螺仪发送端使用不同缩放，请同步修改该比例。
+#define CAN_GYRO_YAW_SCALE (0.0001f)
+#define CAN_DISTENCE_SCALE (0.001f)
+#define CHASSIS_MOTOR_RPM_LIMIT (250)
+
+// 底盘四个电机方向修正：1为正向，-1为反向
+#define CHASSIS_MOTOR1_DIR (1)
+#define CHASSIS_MOTOR2_DIR (1)
+#define CHASSIS_MOTOR3_DIR (1)
+#define CHASSIS_MOTOR4_DIR (1)
+
 // CAN线收发id枚举列表
 typedef enum
 {

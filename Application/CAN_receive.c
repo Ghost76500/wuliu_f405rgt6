@@ -26,13 +26,13 @@ volatile float can_gyro_yaw_rad = 0.0f;
 volatile float can_distence_x_m = 0.0f;
 volatile float can_distence_y_m = 0.0f;
 volatile uint8_t can_odom_new_data_flag = 0;
-
-volatile float vel = 0.0f, Motor_Vel = 0.0f;
-
-// 协议约定：yaw_raw 取值大约在 [-31415, +31415]，表示 [-3.1415, +3.1415] rad 的 1e4 放大。
-// 如你的上位机/陀螺仪发送端使用不同缩放，请同步修改该比例。
-#define CAN_GYRO_YAW_SCALE (0.0001f)
-#define CAN_DISTENCE_SCALE (0.001f)
+volatile motor_measure_t can_y42_motor_measure[4] = {
+    {.motor_id = CAN_Y42_M1_ID, .speed_rpm = 0.0f},
+    {.motor_id = CAN_Y42_M2_ID, .speed_rpm = 0.0f},
+    {.motor_id = CAN_Y42_M3_ID, .speed_rpm = 0.0f},
+    {.motor_id = CAN_Y42_M4_ID, .speed_rpm = 0.0f},
+};
+// volatile uint8_t can_y42_new_data_flag = 0; // 标记底盘电机反馈是否有新数据，供控制任务做离线保护判定
 
 
 /**
@@ -120,21 +120,27 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
                 // 3. 校验数据格式：确保数据长度为 5，且帧头标志为 0x35
                 if ((RxHeader.DLC == 5) && (RxData[0] == 0x35))
                 {
-                    // 4. 解析转速绝对值 (高8位左移并与低8位拼接)
-                    vel = ((uint16_t)RxData[2] << 8) | (uint16_t)RxData[3];
-                    
-                    // 5. 将原始数据按比例转换为真实速度 (协议规定需要乘 0.1)
-                    Motor_Vel = vel * 0.1f; 
-                    
-                    // 6. 判断方向：如果 RxData[1] 不为 0，说明电机在反转
-                    if(RxData[1]) 
-                    { 
-                        Motor_Vel = -Motor_Vel; 
+                    const int8_t motor_dir[4] = {
+                        CHASSIS_MOTOR1_DIR,
+                        CHASSIS_MOTOR2_DIR,
+                        CHASSIS_MOTOR3_DIR,
+                        CHASSIS_MOTOR4_DIR
+                    };
+                    uint8_t motor_index = (uint8_t)(real_motor_id - CAN_Y42_M1_ID);
+                    uint16_t vel_raw = ((uint16_t)RxData[2] << 8) | (uint16_t)RxData[3];
+                    fp32 motor_vel_rpm = ((fp32)vel_raw) * 0.1f;
+
+                    // RxData[1] 非0表示反转
+                    if (RxData[1] != 0U)
+                    {
+                        motor_vel_rpm = -motor_vel_rpm;
                     }
-                    
-                    // （可选）如果你的架构里用到了电机结构体数组，可以在这里更新：
-                    // uint8_t motor_index = RxHeader.ExtId - CAN_Y42_M1_ID; // 算出是第几个电机(0~3)
-                    // can_y42_motor_measure[motor_index].speed_rpm = Motor_Vel;
+
+                    // 与发送端保持同一套方向宏映射，确保控制与反馈符号一致
+                    motor_vel_rpm = motor_vel_rpm * (fp32)motor_dir[motor_index];
+
+                    can_y42_motor_measure[motor_index].motor_id = real_motor_id;
+                    can_y42_motor_measure[motor_index].speed_rpm = motor_vel_rpm;
                     // can_y42_new_data_flag = 1;
                 }
                 break; // 处理完毕，跳出 switch
@@ -149,13 +155,34 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 
 void can_send_chassis_speed(int16_t motor1, int16_t motor2, int16_t motor3, int16_t motor4)
 {
-    const int16_t motor_cmd[4] = {motor1, motor2, motor3, motor4};
+    const int16_t motor_cmd[4] = {
+        (int16_t)(motor1 * CHASSIS_MOTOR1_DIR),
+        (int16_t)(motor2 * CHASSIS_MOTOR2_DIR),
+        (int16_t)(motor3 * CHASSIS_MOTOR3_DIR),
+        (int16_t)(motor4 * CHASSIS_MOTOR4_DIR)
+    };
 
     for (uint8_t i = 0; i < 4; i++)
     {
-        uint8_t dir = (motor_cmd[i] < 0) ? 1U : 0U;
-        X_V2_Vel_Control((uint8_t)(i + 1U), dir, 255, motor_cmd[i], 0);
+        int16_t target_rpm = motor_cmd[i];
+
+        if (target_rpm > CHASSIS_MOTOR_RPM_LIMIT)
+        {
+            target_rpm = CHASSIS_MOTOR_RPM_LIMIT;
+        }
+        else if (target_rpm < -CHASSIS_MOTOR_RPM_LIMIT)
+        {
+            target_rpm = -CHASSIS_MOTOR_RPM_LIMIT;
+        }
+
+        uint8_t dir = (target_rpm < 0) ? 1U : 0U;
+        fp32 vel_rpm_abs = (target_rpm < 0) ? (fp32)(-target_rpm) : (fp32)target_rpm;
+
+        X_V2_Vel_Control((uint8_t)(i + 1U), dir, 255U, vel_rpm_abs, true);
     }
+    // 触发多机同步运动
+    X_V2_Synchronous_motion(0);
+    
 }
 
 
