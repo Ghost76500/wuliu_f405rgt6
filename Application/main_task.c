@@ -3,6 +3,7 @@
 #include "cmsis_os2.h"
 #include "gm65.h"
 #include "bsp_buzzer_pwm.h"
+#include "CAN_receive.h"
 
 /*-----------------------------------内部函数声明-----------------------------------*/
 
@@ -41,7 +42,9 @@ void main_task(void *argument)
         Chassis_Go_Pos(-0.15, 0.15, QIANMIAN, 200); // 向右前方移动0.15m，目标航向角-45度，达到后停顿200ms
         Chassis_Go_Pos(-0.15, 1.0, QIANMIAN, 200); // 向左前方移动0.15m，目标航向角+45度，达到后停顿200ms
         Chassis_Go_Pos(-0.15, 1.0, YOUBIAN, 200); // 向左后方移动0.15m，目标航向角+135度，达到后停顿200ms
-
+        
+        //can_send_chassis_speed(100, 100, 100, 100);
+        osDelay(2000);
         while(1){osDelay(100);}
     }
 }

@@ -17,8 +17,8 @@
 
 #include "chassis_task.h"
 #include "CAN_receive.h"
-#include "bsp_encoder.h"
 #include "dc_motor.h"
+#include "X_V2.h"
 #include <math.h>
 #include "arm_math.h"
 #include "cmsis_os2.h"
@@ -89,6 +89,15 @@ static void chassis_vector_to_mecanum_wheel_speed(const fp32 vx_set, const fp32 
  * @retval none
  */
 static void chassis_control_loop(chassis_move_t *chassis_move_control_loop);
+
+/**
+ * @brief 将四个轮子的目标线速度(m/s)转换为电机转速(RPM)，并发送到CAN总线
+ * @param w1_speed_ms 1号轮目标速度 (m/s)
+ * @param w2_speed_ms 2号轮目标速度 (m/s)
+ * @param w3_speed_ms 3号轮目标速度 (m/s)
+ * @param w4_speed_ms 4号轮目标速度 (m/s)
+ */
+static void chassis_execute_wheel_speeds(fp32 w1_speed_ms, fp32 w2_speed_ms, fp32 w3_speed_ms, fp32 w4_speed_ms);
 
 // ------------------------- 对外接口实现 -------------------------
 void chassis_cmd_set_speed(fp32 vx, fp32 vy)
@@ -177,18 +186,21 @@ void chassis_task(void *argument)
 
   for (;;)
   {
-    // 底盘数据更新
+    // 1. 底盘数据更新（从电机反馈中获取当前状态）
     chassis_feedback_update(&chassis_move);
-    // 底盘控制量设置
+    
+    // 2. 底盘控制量设置（整合遥控器、上位机的速度指令）
     chassis_set_control(&chassis_move);
 
-    // 底盘控制PID计算
+    // 3. 底盘运动学解算（计算出四个轮子需要的线速度 m/s）
     chassis_control_loop(&chassis_move);
-
-    // 发送控制PWM
-    pwm_cmd_chassis(chassis_move.motor_chassis[0].give_pwm, chassis_move.motor_chassis[1].give_pwm,
-                  chassis_move.motor_chassis[2].give_pwm, chassis_move.motor_chassis[3].give_pwm);
-
+    
+    // 4. 执行轮速：将解算好的四个轮子目标速度(m/s)直接塞进我们的新函数里！
+    chassis_execute_wheel_speeds(chassis_move.motor_chassis[0].speed_set,
+                                 chassis_move.motor_chassis[1].speed_set,
+                                 chassis_move.motor_chassis[2].speed_set,
+                                 chassis_move.motor_chassis[3].speed_set);
+  
     PreviousWakeTime += CHASSIS_CONTROL_TIME_MS; 
     osDelayUntil(PreviousWakeTime);
 
@@ -255,16 +267,16 @@ static void chassis_feedback_update(chassis_move_t *chassis_move_update) // 1
   {
     return;
   }
-
-  encoder_update_all(); // 更新编码器数据，必须在获取速度之前调用
   
   uint8_t i = 0;
   for (i = 0; i < 4; i++)
   {
+    // 发送读取实时转速指令，并使用CAN回传的电机速度反馈
+    X_V2_Read_Sys_Params((uint8_t)(i + 1U), S_VEL);
+    osDelay(1); // 让CAN给can电机的接收留时间
     // 更新电机速度，加速度是速度的PID微分
-    
     chassis_move_update->motor_chassis[i].accel = chassis_move_update->motor_speed_pid[i].Dbuf[0] * CHASSIS_CONTROL_FREQUENCE;
-    chassis_move_update->motor_chassis[i].speed = ENCODER_DELTA_TO_VECTOR_SEN * encoder_get_speed(i + 1);
+    chassis_move_update->motor_chassis[i].speed = can_y42_motor_measure[i].speed_rpm * RPM_TO_SPEED_MS;
   }
 
   // 更新底盘纵向速度x、平移速度y、旋转角速度wz，坐标系为右手系（向前为x正，向左为y正，向上为z正）
@@ -374,14 +386,14 @@ static void chassis_vector_to_mecanum_wheel_speed(const fp32 vx_set, const fp32 
   wheel_speed[3] = -(vx_set_tem - vy_set_tem + MOTOR_DISTANCE_TO_CENTER * wz_set); // RR (pre-flip)
 }
 
-static void chassis_control_loop(chassis_move_t *chassis_move_control_loop) // 3
+static void chassis_control_loop(chassis_move_t *chassis_move_control_loop)
 {
   fp32 max_vector = 0.0f, vector_rate = 0.0f;
   fp32 temp = 0.0f;
   fp32 wheel_speed[4] = {0.0f, 0.0f, 0.0f, 0.0f};
   uint8_t i = 0;
 
-  // 停机判定：指令趋近 0 时，清除速度环积分并输出 0，避免微小残余 PWM
+  // 1. 停机判定：当目标速度趋近于 0 时，触发停机标志
   uint8_t stop_cmd = 0;
   if (fabsf(chassis_move_control_loop->vx_set) < CHASSIS_STOP_EPS_V &&
       fabsf(chassis_move_control_loop->vy_set) < CHASSIS_STOP_EPS_V &&
@@ -390,37 +402,25 @@ static void chassis_control_loop(chassis_move_t *chassis_move_control_loop) // 3
     stop_cmd = 1;
   }
 
-  // 麦轮运动分解
+  // 2. 麦轮运动学分解 (根据 vx, vy, wz 算出四个轮子的理论速度 m/s)
   chassis_vector_to_mecanum_wheel_speed(chassis_move_control_loop->vx_set, chassis_move_control_loop->vy_set, chassis_move_control_loop->wz_set, wheel_speed);
 
-  // 电机安装/接线方向修正：只修正目标轮速（speed_set）的符号
+  // 3. 轮端方向修正 (这里乘以 CHASSIS_WHEELx_DIR 修正轮子安装的极性差异)
   wheel_speed[0] *= CHASSIS_WHEEL1_DIR;
   wheel_speed[1] *= CHASSIS_WHEEL2_DIR;
   wheel_speed[2] *= CHASSIS_WHEEL3_DIR;
   wheel_speed[3] *= CHASSIS_WHEEL4_DIR;
-  
-  /*
-  if (chassis_move_control_loop->chassis_mode == CHASSIS_VECTOR_RAW)
-  {
 
-    for (i = 0; i < 4; i++)
-    {
-      chassis_move_control_loop->motor_chassis[i].give_current = (int16_t)(wheel_speed[i]);
-    }
-    // raw原始模式直接返回
-    return;
-  }
-  */
-
-  // 计算轮子的最大控制速度，并进行限制
+  // 4. 滤除速度设定死区，并将临时速度保存进结构体
   for (i = 0; i < 4; i++)
   {
-    // 轮速设定死区：抑制 0 附近的抖动
     if (fabsf(wheel_speed[i]) < CHASSIS_SPEED_SET_DEADBAND)
     {
       wheel_speed[i] = 0.0f;
     }
     chassis_move_control_loop->motor_chassis[i].speed_set = wheel_speed[i];
+    
+    // 寻找四个轮子中绝对速度最大的那一个
     temp = fabs(chassis_move_control_loop->motor_chassis[i].speed_set);
     if (max_vector < temp)
     {
@@ -428,18 +428,17 @@ static void chassis_control_loop(chassis_move_t *chassis_move_control_loop) // 3
     }
   }
 
-  // 停机时：直接清积分并输出 0
+  // 5. 如果是停机状态，把目标速度全部清零，并直接返回
   if (stop_cmd)
   {
     for (i = 0; i < 4; i++)
     {
-      PID_clear(&chassis_move_control_loop->motor_speed_pid[i]);
-      chassis_move_control_loop->motor_chassis[i].give_pwm = 0;
       chassis_move_control_loop->motor_chassis[i].speed_set = 0.0f;
     }
-    return;
+    return; // <--- 注意：这里直接 return 退出了
   }
 
+  // 6. 如果最大轮速超过了设定上限，对四个轮子进行等比例缩小，防止因为超速导致底盘打转
   if (max_vector > MAX_WHEEL_SPEED)
   {
     vector_rate = MAX_WHEEL_SPEED / max_vector;
@@ -448,37 +447,23 @@ static void chassis_control_loop(chassis_move_t *chassis_move_control_loop) // 3
       chassis_move_control_loop->motor_chassis[i].speed_set *= vector_rate;
     }
   }
+}
 
-  // 发送can速度
+static void chassis_execute_wheel_speeds(fp32 w1_speed_ms, fp32 w2_speed_ms, fp32 w3_speed_ms, fp32 w4_speed_ms)
+{
+    int16_t motor_target_rpm[4] = {0};
 
+    // 物理量转换：速度(m/s) / 转换系数 = 电机转速(RPM)
+    motor_target_rpm[0] = (int16_t)(w1_speed_ms / RPM_TO_SPEED_MS);
+    motor_target_rpm[1] = (int16_t)(w2_speed_ms / RPM_TO_SPEED_MS);
+    motor_target_rpm[2] = (int16_t)(w3_speed_ms / RPM_TO_SPEED_MS);
+    motor_target_rpm[3] = (int16_t)(w4_speed_ms / RPM_TO_SPEED_MS);
 
-
-  // 计算pid
-  for (i = 0; i < 4; i++)
-  {
-    PID_calc(&chassis_move_control_loop->motor_speed_pid[i], chassis_move_control_loop->motor_chassis[i].speed, chassis_move_control_loop->motor_chassis[i].speed_set);
-  }
-
-  // 赋值电流值(pwm值)
-  for (i = 0; i < 4; i++)
-  {
-    int16_t pwm = (int16_t)(chassis_move_control_loop->motor_speed_pid[i].out);
-    // PWM 死区：抑制微小输出
-    if (pwm <= CHASSIS_PWM_DEADBAND && pwm >= -CHASSIS_PWM_DEADBAND)
-    {
-      pwm = 0;
-    }
-    // PWM 最小输出：当输出非零但小于最小值时，提升到最小值以克服电机静摩擦
-    else if (pwm > 0 && pwm < CHASSIS_PWM_MIN_OUTPUT)
-    {
-      pwm = CHASSIS_PWM_MIN_OUTPUT;
-    }
-    else if (pwm < 0 && pwm > -CHASSIS_PWM_MIN_OUTPUT)
-    {
-      pwm = -CHASSIS_PWM_MIN_OUTPUT;
-    }
-    chassis_move_control_loop->motor_chassis[i].give_pwm = pwm;
-  }
+    // 调用底层 CAN 接口发送数据
+    can_send_chassis_speed(motor_target_rpm[0], 
+                           motor_target_rpm[1], 
+                           motor_target_rpm[2], 
+                           motor_target_rpm[3]);
 }
 
 const chassis_move_t *get_chassis_move_data(void)

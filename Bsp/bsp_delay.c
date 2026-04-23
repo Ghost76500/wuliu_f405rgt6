@@ -18,24 +18,25 @@
 #include "tim.h"
 #include "cmsis_os2.h"
 
-void delay_ms(uint16_t ms)
+
+void DWT_Delay_Init(void)
+{
+    CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+    DWT->CYCCNT = 0;
+    DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
+}
+
+void delay_ms(uint32_t ms)
 {
     HAL_Delay(ms);
 }
 
-void delay_us(uint16_t us)
+void delay_us(uint32_t us)
 {
-    // 1. 设置计数器为0 
-    //__HAL_TIM_SET_COUNTER(&htim13, 0);
-
-    // 2. 开启定时器
-    //HAL_TIM_Base_Start(&htim13);
-
-    // 3. 等待计数到达指定值
-    // "傻等"模式：只要计数器的值小于设定的 us，就一直在这里空转
-    // 这里的计数器每 1us 会自动加 1
-    //while (__HAL_TIM_GET_COUNTER(&htim13) < us);
-
-    // 4. 关闭定时器
-    //HAL_TIM_Base_Stop(&htim13);
+    uint32_t delay_ticks = us * (SystemCoreClock / 1000000U);
+    uint32_t start_tick = DWT->CYCCNT;
+    while ((DWT->CYCCNT - start_tick) < delay_ticks)
+    {
+        __NOP(); 
+    }
 }

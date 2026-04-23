@@ -18,8 +18,9 @@ void key_task(void *argument) {
             bsp_test_angle_set(500); // 测试用：设置夹爪舵机到闭合位置
             //X_V2_Read_Sys_Params(1, S_VEL);
             //X_V2_Vel_Control(1, 0, 255, 100.0f, false); // 测试用：让电机1以1000速度运行，限流500mA
-            can_send_chassis_speed(50, 100, 100, 100); // 测试用：发送底盘速度指令
-            X_V2_Read_Sys_Params(1, S_VEL);
+            //can_send_chassis_speed(50, 100, 100, 100); // 测试用：发送底盘速度指令
+            //X_V2_Read_Sys_Params(1, S_VEL);
+            chassis_set_control_target(0.0f, 0.0f, 0.1f);
         }
         osDelay(10); // 延时10毫秒
   }

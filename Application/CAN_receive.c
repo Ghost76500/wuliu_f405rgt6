@@ -4,6 +4,8 @@
 #include "position_task.h"
 #include "X_V2.h"
 #include "struct_typedef.h"
+#include "cmsis_os.h"
+#include "bsp_delay.h"
 
 
 extern CAN_HandleTypeDef hcan1;
@@ -179,6 +181,8 @@ void can_send_chassis_speed(int16_t motor1, int16_t motor2, int16_t motor3, int1
         fp32 vel_rpm_abs = (target_rpm < 0) ? (fp32)(-target_rpm) : (fp32)target_rpm;
 
         X_V2_Vel_Control((uint8_t)(i + 1U), dir, 255U, vel_rpm_abs, true);
+        osDelay(1); // 让后两个电机也能收到数据
+        //delay_us(500); // 给 CAN 总线一点时间处理发送，避免过快调用导致的拥堵
     }
     // 触发多机同步运动
     X_V2_Synchronous_motion(0);

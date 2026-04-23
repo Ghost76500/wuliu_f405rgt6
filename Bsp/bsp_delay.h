@@ -18,8 +18,10 @@
 
 #include "stdint.h"
 
-extern void delay_ms(uint16_t ms);
-extern void delay_us(uint16_t us);
+extern void DWT_Delay_Init(void);
+
+extern void delay_ms(uint32_t ms);
+extern void delay_us(uint32_t us);
 
 #endif
 

@@ -114,6 +114,7 @@ int main(void)
   bsp_servo_pwm_init();
   OLED_Init();
 
+  DWT_Delay_Init(); // 初始化DWT延时函数
   
   /* USER CODE END 2 */
 
