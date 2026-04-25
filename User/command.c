@@ -1,145 +1,116 @@
 #include "command.h"
 
-// 角度包固定长度
-#define COMMAND_MIN_LENGTH 11
-#define COMMAND_FRAME_LENGTH 11
-#define COMMAND_HEADER 0x55
-#define COMMAND_ANGLE_ID 0x53
+// 双帧头和帧尾
+#define COMMAND_HEADER_1 0xAA
+#define COMMAND_HEADER_2 0x55
+#define COMMAND_TAIL     0x6B
 
-// 循环缓冲区大小
-#define BUFFER_SIZE 128
-// 循环缓冲区
+// 循环缓冲区大小 (建议设为256，索引使用uint16_t防止溢出)
+#define BUFFER_SIZE 256
+
 uint8_t buffer[BUFFER_SIZE];
-// 循环缓冲区读索引
-uint8_t readIndex = 0;
-// 循环缓冲区写索引
-uint8_t writeIndex = 0;
+uint16_t readIndex = 0;
+uint16_t writeIndex = 0;
+uint16_t bufferCount = 0; // 引入计数量，初学者最容易理解的防错写法
 
 /**
-* @brief 增加读索引
-* @param length 要增加的长度
+* @brief 增加读索引，并减少剩余数据量
 */
-void Command_AddReadIndex(uint8_t length) {
-    readIndex += length;
-    readIndex %= BUFFER_SIZE;
+void Command_AddReadIndex(uint16_t length) {
+    readIndex = (readIndex + length) % BUFFER_SIZE;
+    bufferCount -= length;
 }
 
 /**
-* @brief 读取第i位数据 超过缓存区长度自动循环
-* @param i 要读取的数据索引
+* @brief 读取距离当前读指针第 i 位的数据 
+* @param i 偏移量
 */
-
-uint8_t Command_Read(uint8_t i) {
-    uint8_t index = i % BUFFER_SIZE;
-    return buffer[index];
+uint8_t Command_Read(uint16_t i) {
+    return buffer[(readIndex + i) % BUFFER_SIZE];
 }
 
 /**
 * @brief 计算未处理的数据长度
-* @return 未处理的数据长度
-* @retval 0 缓冲区为空
-* @retval 1~BUFFER_SIZE-1 未处理的数据长度
-* @retval BUFFER_SIZE 缓冲区已满
 */
-//uint8_t Command_GetLength() {
-//  // 读索引等于写索引时，缓冲区为空
-//  if (readIndex == writeIndex) {
-//    return 0;
-//  }
-//  // 如果缓冲区已满,返回BUFFER_SIZE
-//  if (writeIndex + 1 == readIndex || (writeIndex == BUFFER_SIZE - 1 && readIndex == 0)) {
-//    return BUFFER_SIZE;
-//  }
-//  // 如果缓冲区未满,返回未处理的数据长度
-//  if (readIndex <= writeIndex) {
-//    return writeIndex - readIndex;
-//  } else {
-//    return BUFFER_SIZE - readIndex + writeIndex;
-//  }
-//}
-
-uint8_t Command_GetLength() {
-    return (writeIndex + BUFFER_SIZE - readIndex) % BUFFER_SIZE;
+uint16_t Command_GetLength() {
+    return bufferCount;
 }
 
-
 /**
-* @brief 计算缓冲区剩余空间
-* @return 剩余空间
-* @retval 0 缓冲区已满
-* @retval 1~BUFFER_SIZE-1 剩余空间
-* @retval BUFFER_SIZE 缓冲区为空
+* @brief 获取缓冲区剩余空间
 */
-uint8_t Command_GetRemain() {
-    return BUFFER_SIZE - Command_GetLength();
+uint16_t Command_GetRemain() {
+    return BUFFER_SIZE - bufferCount;
 }
 
 /**
 * @brief 向缓冲区写入数据
-* @param data 要写入的数据指针
-* @param length 要写入的数据长度
-* @return 写入的数据长度
 */
-uint8_t Command_Write(uint8_t *data, uint8_t length) {
-    // 如果缓冲区不足 则不写入数据 返回0
+uint8_t Command_Write(uint8_t *data, uint16_t length) {
     if (Command_GetRemain() < length) {
-        return 0;
+        return 0; // 空间不足直接丢弃当前碎片
     }
-    // 使用memcpy函数将数据写入缓冲区
-    if (writeIndex + length < BUFFER_SIZE) {
-        memcpy(buffer + writeIndex, data, length);
-        writeIndex += length;
-    } else {
-        uint8_t firstLength = BUFFER_SIZE - writeIndex;
-        memcpy(buffer + writeIndex, data, firstLength);
-        memcpy(buffer, data + firstLength, length - firstLength);
-        writeIndex = length - firstLength;
+    // 逐字节存入环形缓冲区
+    for (uint16_t i = 0; i < length; i++) {
+        buffer[writeIndex] = data[i];
+        writeIndex = (writeIndex + 1) % BUFFER_SIZE;
     }
+    bufferCount += length;
     return length;
 }
 
 /**
-* @brief 尝试获取一条指令
-* @param command 指令存放指针
-* @return 获取的指令长度
-* @retval 0 没有获取到指令
+* @brief 尝试获取一条完整的 Maxicam 指令
+* @param command 指令存放指针 (外部需保证数组至少有 10 字节大小)
 */
 uint8_t Command_GetCommand(uint8_t *command) {
-    // 寻找完整指令
-    while (1) {
-        // 如果缓冲区长度小于COMMAND_MIN_LENGTH 则不可能有完整的指令
-        if (Command_GetLength() < COMMAND_MIN_LENGTH) {
-        return 0;
-        }
-        // 包头必须是0x55
-        if (Command_Read(readIndex) != COMMAND_HEADER) {
-        Command_AddReadIndex(1);
-        continue;
+    for(;;) 
+    {
+        // 如果未处理的数据长度连一帧 (10字节) 都不够，直接退出等下次串口接收
+        if (Command_GetLength() < MAXICAM_FRAME_LENGTH) {
+            return 0;
         }
 
-        // 第二字节必须是角度包标识0x53
-        if (Command_Read(readIndex + 1) != COMMAND_ANGLE_ID) {
-        Command_AddReadIndex(1);
-        continue;
+        // 1. 判断第一个包头是否为 0xAA
+        if (Command_Read(0) != COMMAND_HEADER_1) {
+            Command_AddReadIndex(1); // 扔掉错误的一个字节，继续往后找
+            continue;
         }
 
-        // 固定11字节包，校验为前10字节求和
+        // 2. 【修改点2】判断第二个包头是否为 0x55
+        if (Command_Read(1) != COMMAND_HEADER_2) {
+            // 注意：这里哪怕第二个头不对，也只能扔掉 1 个字节！
+            // 因为有可能出现 [0xAA, 0xAA, 0x55...] 的情况，如果你扔掉2个字节，真正的包头就被错过了
+            Command_AddReadIndex(1); 
+            continue;
+        }
+
+        // 3. 提前判断包尾是否为 0x6B (极大地提高筛选效率)
+        // 索引为 9 的地方就是第 10 个字节
+        if (Command_Read(MAXICAM_FRAME_LENGTH - 1) != COMMAND_TAIL) {
+            Command_AddReadIndex(1);
+            continue;
+        }
+
+        // 4. 【修改点3】计算校验和: 新协议是把 DATA[1] 到 DATA[7] 累加
         uint8_t sum = 0;
-        for (uint8_t i = 0; i < COMMAND_FRAME_LENGTH - 1; i++) {
-        sum += Command_Read(readIndex + i);
+        for (uint8_t i = 1; i <= 7; i++) {
+            sum += Command_Read(i);
         }
 
-        if (sum != Command_Read(readIndex + COMMAND_FRAME_LENGTH - 1)) {
-        Command_AddReadIndex(1);
-        continue;
+        // 5. 【修改点4】判断算出来的校验和是否等于 DATA[8]
+        if (sum != Command_Read(8)) {
+            Command_AddReadIndex(1); // 校验失败，说明中间数据坏了，当作废包处理
+            continue;
         }
 
-        // 如果找到完整指令 则将指令写入command 返回指令长度
-        for (uint8_t i = 0; i < COMMAND_FRAME_LENGTH; i++) {
-        command[i] = Command_Read(readIndex + i);
+        // 6. 校验全部通过，把这完美的 10 个字节提取到外面的数组里
+        for (uint8_t i = 0; i < MAXICAM_FRAME_LENGTH; i++) {
+            command[i] = Command_Read(i);
         }
 
-        Command_AddReadIndex(COMMAND_FRAME_LENGTH);
-        return COMMAND_FRAME_LENGTH;
+        // 7. 移动读指针一整帧的距离 (10字节)
+        Command_AddReadIndex(MAXICAM_FRAME_LENGTH);
+        return MAXICAM_FRAME_LENGTH;
     }
 }

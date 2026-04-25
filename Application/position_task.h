@@ -23,11 +23,13 @@
 #define CHASSIS_POSITION_ROOT_KP        0.6f
 #define CHASSIS_POSITION_ROOT_KD        0.2f
 
-#define CHASSIS_POSITION_DEADBAND          0.005f
+#define CHASSIS_POSITION_DEADBAND          0.001f
 #define CHASSIS_POSITION_ARRIVE_THRESHOLD  0.010f
 #define CHASSIS_POSITION_ARRIVE_STABLE_CYCLES 3U
 #define CHASSIS_POSITION_X_LIMIT_M         2.3f
 #define CHASSIS_POSITION_Y_LIMIT_M         2.3f
+// 定义航向角到达的阈值，0.05 rad 大约是 2.8 度。你可以根据实际需求微调。
+#define CHASSIS_YAW_ARRIVE_THRESHOLD       0.006f
 
 #define YOUBIAN -1.5707963f
 #define ZUOBIAN 1.570963f
@@ -52,6 +54,8 @@ typedef struct
 
     const volatile fp32 *position_x_ptr;
     const volatile fp32 *position_y_ptr;
+    // 1. 新增：获取当前航向角的指针
+    const volatile fp32 *yaw_ptr;
 
     pid_type_def position_x_pid;
     pid_type_def position_y_pid;
@@ -61,6 +65,8 @@ typedef struct
 
     fp32 position_x_set;
     fp32 position_y_set;
+    // 2. 新增：存储当前真实航向角
+    fp32 yaw;
 
     fp32 vx_out;
     fp32 vy_out;

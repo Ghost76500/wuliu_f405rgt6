@@ -15,6 +15,7 @@
 #include "CAN_receive.h"
 #include "cmsis_os2.h"
 #include <math.h>
+#include "user_lib.h"
 
 /*-----------------------------------宏定义-----------------------------------*/
 
@@ -212,11 +213,13 @@ void Chassis_Go_Pos(fp32 x_m, fp32 y_m, fp32 yaw_rad, uint16_t delay)
     {
         osDelay(10);
     }
-
+    
     if (delay != 0U)
     {
         osDelay(delay);
     }
+    // 关闭位置环
+    position_disable();
 }
 
 /*
@@ -245,8 +248,10 @@ static void position_init(chassis_odometry_t *odom_init)
 
     extern volatile float can_distence_x_m;
     extern volatile float can_distence_y_m;
+    extern volatile float can_gyro_yaw_rad; // 新增：引入外部的陀螺仪角度
     odom_init->position_x_ptr = &can_distence_x_m;
     odom_init->position_y_ptr = &can_distence_y_m;
+    odom_init->yaw_ptr = &can_gyro_yaw_rad; // 新增：绑定指针
 
     const static fp32 position_pid_x[3] = {
         CHASSIS_POSITION_PID_KP,
@@ -270,6 +275,7 @@ static void position_init(chassis_odometry_t *odom_init)
 
     odom_init->position_x = *(odom_init->position_x_ptr);
     odom_init->position_y = *(odom_init->position_y_ptr);
+    odom_init->yaw = *(odom_init->yaw_ptr); // 新增：获取初始角度
 
     odom_init->position_x_set = odom_init->position_x;
     odom_init->position_y_set = odom_init->position_y;
@@ -305,6 +311,7 @@ static void position_feedback_update(chassis_odometry_t *odom_update)
 
     odom_update->position_x = *(odom_update->position_x_ptr);
     odom_update->position_y = *(odom_update->position_y_ptr);
+    odom_update->yaw = *(odom_update->yaw_ptr); // 新增：每次循环更新最新角度
 }
 
 static void position_control_calc(chassis_odometry_t *odom_control)
@@ -338,10 +345,16 @@ static void position_control_calc(chassis_odometry_t *odom_control)
 
     fp32 err_x = odom_control->position_x_set - odom_control->position_x;
     fp32 err_y = odom_control->position_y_set - odom_control->position_y;
-
-    // 到位判定仅使用原始位置误差，不受控制死区影响。
+    // 1. 获取距离误差
     fp32 dist = sqrtf(err_x * err_x + err_y * err_y);
-    if (dist < CHASSIS_POSITION_ARRIVE_THRESHOLD)
+    // 2. 获取角度误差 
+    // 【老学长防坑提示】：必须使用 rad_format 获取最短角度差！
+    // 比如目标是 +3.14，当前是 -3.14，物理上它们在同一个方向，直接相减是 6.28，判定会失败。
+    // rad_format 会将其换算成 0。
+    fp32 err_yaw = rad_format(odom_control->yaw_set - odom_control->yaw);
+
+    // 3. 联合判定：距离小于阈值 且 角度误差的绝对值小于阈值
+    if ((dist < CHASSIS_POSITION_ARRIVE_THRESHOLD) && (fabsf(err_yaw) < CHASSIS_YAW_ARRIVE_THRESHOLD))
     {
         if (g_position_arrive_stable_cnt < CHASSIS_POSITION_ARRIVE_STABLE_CYCLES)
         {
@@ -350,7 +363,7 @@ static void position_control_calc(chassis_odometry_t *odom_control)
     }
     else
     {
-        g_position_arrive_stable_cnt = 0;
+        g_position_arrive_stable_cnt = 0; // 只要有一项没满足，立刻打断稳定计数
     }
     odom_control->arrive_flag = (g_position_arrive_stable_cnt >= CHASSIS_POSITION_ARRIVE_STABLE_CYCLES) ? 1 : 0;
 
@@ -369,8 +382,8 @@ static void position_control_calc(chassis_odometry_t *odom_control)
         err_y_ctrl = 0.0f;
     }
 
-    odom_control->vx_out = PID_calc(&odom_control->position_x_pid, 0.0f, -err_x_ctrl);
-    odom_control->vy_out = PID_calc(&odom_control->position_y_pid, 0.0f, -err_y_ctrl);
+    odom_control->vx_out = PID_calc(&odom_control->position_x_pid, 0.0f, err_x_ctrl); // 在这里加负号可以改变极性
+    odom_control->vy_out = PID_calc(&odom_control->position_y_pid, 0.0f, err_y_ctrl);
 }
 
 static void position_output(chassis_odometry_t *odom_output)

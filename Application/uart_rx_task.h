@@ -2,12 +2,13 @@
 #define UART_RX_TASK_H
 
 #include "stdint.h"
-#include "struct_typedef.h"
 
-// 定义一个统一的串口消息包裹
+#define MAX_UART_FRAG_LEN 32
+
+// 基础的数据包结构体 (取消了 uart_source，因为每个外设有专属队列)
 typedef struct {
-    uint8_t uart_source; // 标记是谁发来的数据，比如 1代表UART1, 2代表UART2
-    void *pData;         // 指向具体数据的指针
-} Global_UART_Msg_t;
+    uint16_t length;                  // 数据长度
+    uint8_t  data[MAX_UART_FRAG_LEN]; // 数据本体，深拷贝最安全
+} Uart_Msg_t;
 
 #endif // UART_RX_TASK_H

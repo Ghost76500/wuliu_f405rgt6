@@ -4,8 +4,10 @@
 #include "main.h"
 #include <string.h>
 
-uint8_t Command_Write(uint8_t *data, uint8_t length);
+// 定义 Maxicam 数据包固定长度
+#define MAXICAM_FRAME_LENGTH 10
 
+uint8_t Command_Write(uint8_t *data, uint16_t length);
 uint8_t Command_GetCommand(uint8_t *command);
 
 #endif /* INC_COMMAND_H_ */

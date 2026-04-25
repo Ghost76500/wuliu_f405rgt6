@@ -101,6 +101,11 @@ osMessageQueueId_t KeyQueueHandle;
 const osMessageQueueAttr_t KeyQueue_attributes = {
   .name = "KeyQueue"
 };
+/* Definitions for maxicamQueue */
+osMessageQueueId_t maxicamQueueHandle;
+const osMessageQueueAttr_t maxicamQueue_attributes = {
+  .name = "maxicamQueue"
+};
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
@@ -142,6 +147,9 @@ void MX_FREERTOS_Init(void) {
   /* Create the queue(s) */
   /* creation of KeyQueue */
   KeyQueueHandle = osMessageQueueNew (16, sizeof(uint8_t), &KeyQueue_attributes);
+
+  /* creation of maxicamQueue */
+  maxicamQueueHandle = osMessageQueueNew (16, 34, &maxicamQueue_attributes);
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */

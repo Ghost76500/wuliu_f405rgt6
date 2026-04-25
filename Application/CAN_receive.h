@@ -59,5 +59,6 @@ extern volatile float can_gyro_yaw_rad;
 extern volatile float can_distence_x_m;
 extern volatile float can_distence_y_m;
 extern volatile uint8_t can_odom_new_data_flag;
+extern void can_chassis_init(void); // 使能底盘can步进电机驱动板
 
 #endif /* CAN_RECEIVE_H */

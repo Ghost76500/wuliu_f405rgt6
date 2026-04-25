@@ -63,9 +63,9 @@
 // ==================== 停机/死区抑制 ====================
 // 速度单位: m/s；角速度单位: rad/s；PWM单位: 与 give_pwm 一致
 // 用于抑制“停机时因为积分残留/编码器零漂导致的微小输出”。
-#define CHASSIS_STOP_EPS_V (0.002f)           // 认为“已经停”的线速度阈值
-#define CHASSIS_STOP_EPS_WZ (0.05f)          // 认为“已经停”的角速度阈值
-#define CHASSIS_SPEED_SET_DEADBAND (0.005f)   // 轮速设定死区（m/s）
+#define CHASSIS_STOP_EPS_V (0.0008f)           // 认为“已经停”的线速度阈值
+#define CHASSIS_STOP_EPS_WZ (0.01f)          // 认为“已经停”的角速度阈值
+#define CHASSIS_SPEED_SET_DEADBAND (0.001f)   // 轮速设定死区（m/s）
 #define CHASSIS_PWM_DEADBAND (8)             // PWM 输出死区（|pwm|<=该值则置0）
 #define CHASSIS_PWM_MIN_OUTPUT (10)          // PWM 最小有效输出值（用于克服电机静摩擦，提高位置环精度）
 

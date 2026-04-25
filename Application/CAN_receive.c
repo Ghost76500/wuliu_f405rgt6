@@ -4,7 +4,7 @@
 #include "position_task.h"
 #include "X_V2.h"
 #include "struct_typedef.h"
-#include "cmsis_os.h"
+#include "cmsis_os2.h"
 #include "bsp_delay.h"
 
 
@@ -241,4 +241,15 @@ void can_SendCmd(__IO uint8_t *cmd, uint8_t len)
 
         ++packNum;
     }
+}
+
+void can_chassis_init(void)
+{
+    X_V2_En_Control(1, true, false);
+    osDelay(1);
+    X_V2_En_Control(2, true, false);
+    osDelay(1);
+    X_V2_En_Control(3, true, false);
+    osDelay(1);
+    X_V2_En_Control(4, true, false);
 }

@@ -2,34 +2,27 @@
 #include "cmsis_os2.h"
 #include "command.h"
 
-extern osMessageQueueId_t global_uart_queueHandle;
+// 声明 CubeMX 里创建的各个独立队列句柄
+extern osMessageQueueId_t maxicamQueueHandle;
+// extern osMessageQueueId_t opsQueueHandle;
 
 void uart_rx_task(void *argument)
 {
     osDelay(100); // 任务启动延时，等待系统稳定
-    Global_UART_Msg_t recv_msg; // 统一的消息结构体
     
+    Uart_Msg_t rx_msg;            // 用于接收队列中碎片的变量
+
     for (;;)
     {
-        /*
-        //if (xQueueReceive(global_uart_queueHandle, &recv_msg, 100) == pdTRUE) 
+        // 第 4 个参数填 osWaitForever
+        // 效果：如果队列空了，当前任务立刻交出 CPU 并在后台“沉睡”。
+        // 直到串口中断（ISR）往队列里塞了数据，RTOS 会瞬间把这个任务“踹醒”并继续往下执行。
+        if (osMessageQueueGet(maxicamQueueHandle, &rx_msg, NULL, osWaitForever) == osOK)
         {
-            // 根据包裹上的“发件人”标签，交给不同的部门去解包
-            switch(recv_msg.uart_source)
-            {
-                case 1: // NANO 发来的
-                    //NANO_Data_Unpack(((UART1_RX_TypeDef*)recv_msg.pData)->buffer);
-                    break;
-                case 2: // OPS 定位发来的
-                    //POS_Data_Unpack(((UART2_RX_TypeDef*)recv_msg.pData)->buffer);
-                    break;
-                case 5: // RC 遥控器发来的
-                    //RC_Data_Unpack(((UART5_RX_TypeDef*)recv_msg.pData)->buffer);
-                    break;
-            }
-            
+            // 只要代码能走到这里，说明一定是被数据唤醒了
+            // 下面正常进行环形缓冲区解析等操作...
+            Command_Write(rx_msg.data, rx_msg.length);
+            // ...
         }
-        */
-       osDelay(5);
     }
 }
