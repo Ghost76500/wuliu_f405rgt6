@@ -9,7 +9,7 @@
 #include "struct_typedef.h"
 #include "pid.h"
 
-#define CHASSIS_POSITION_TASK_INIT_TIME 357
+#define CHASSIS_POSITION_TASK_INIT_TIME 387
 
 #define POSITION_CONTROL_TIME      0.05f
 #define POSITION_CONTROL_TIME_MS   50

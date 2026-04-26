@@ -109,12 +109,12 @@ int main(void)
   MX_I2C2_Init();
   MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
-  buzzer_init();
-  can_filter_init();
-  bsp_servo_pwm_init();
-  OLED_Init();
+  buzzer_init(); // 初始化蜂鸣器
+  can_filter_init(); // 初始化CAN接收
+  bsp_servo_pwm_init(); // 初始化云台和夹爪舵机PWM
+  OLED_Init(); // 初始化OLED显示屏
 
-  DWT_Delay_Init(); // 初始化DWT延时函数
+  // DWT_Delay_Init(); // 初始化DWT延时函数
   
   /* USER CODE END 2 */
 

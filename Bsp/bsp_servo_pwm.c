@@ -1,5 +1,6 @@
 #include "bsp_servo_pwm.h"
 #include "tim.h"
+#include "cmsis_os2.h"
 
 /**
  * @brief 初始化云台和夹爪舵机 PWM
@@ -30,7 +31,7 @@ void bsp_gimbal_angle_set(uint16_t duty)
     if (duty < 500) duty = 500;
     if (duty > 2500) duty = 2500;
 
-    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, duty);
+    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, duty);
 }
 
 /**
@@ -43,6 +44,11 @@ void bsp_gripper_state_set(uint16_t duty)
     if (duty < 500) duty = 500;
     if (duty > 2500) duty = 2500;
 
-    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, duty);
+    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, duty);
 }
 
+void bsp_gimbal_turn(uint16_t target_duty, uint16_t step_delay_ms)
+{
+    bsp_gimbal_angle_set(target_duty);
+    osDelay(step_delay_ms);
+}

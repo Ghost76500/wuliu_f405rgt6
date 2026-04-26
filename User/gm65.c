@@ -12,6 +12,8 @@ static uint8_t rx_byte = 0;          // 每次中断接收1字节
 static volatile uint8_t rx_index = 0;         // 记录已接收字节数
 static volatile uint8_t data_ready = 0;       // 数据包完成标志
 
+uint8_t color_task[6]={0};
+
 void uart_init_it(UART_HandleTypeDef *huart)
 {
     // 启动第一次接收中断
@@ -31,6 +33,11 @@ void data_receive(UART_HandleTypeDef *huart) // 传入uart句柄
       data_ready = 1;  // 标记数据完整，由主循环处理
       // 发送消息到队列 (注意中断里最后一个参数超时时间必须是 0)
       //osMessageQueuePut(gm65_queueHandle, &msg_length, 0, 0);
+      // 拷贝数据到color_task数组
+        for (int i = 0; i < 6; i++)
+        {
+            color_task[i] = rx_data[i];
+        }
       return;
     }
     
@@ -38,16 +45,12 @@ void data_receive(UART_HandleTypeDef *huart) // 传入uart句柄
     HAL_UART_Receive_IT(huart, &rx_byte, 1);
 }
 
+// 清空数组并重置状态，准备接收下一条数据，不需要用到
 void process_data(UART_HandleTypeDef *huart)
 {
     if (data_ready)
     {
         data_ready = 0;
-    
-        // 处理接收到的数据
-        // 这里简单地将接收到的数据通过LED指示
-        //bsp_led_toggle(CORE_THREE);
-        //HAL_UART_Transmit_DMA(&huart3, rx_data, rx_index); // 发送接收到的数据
         // 重置缓冲区，等待下一条数据
         rx_index = 0;
 
