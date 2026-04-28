@@ -108,6 +108,7 @@ int main(void)
   MX_TIM3_Init();
   MX_I2C2_Init();
   MX_TIM4_Init();
+  MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
   buzzer_init(); // 初始化蜂鸣器
   can_filter_init(); // 初始化CAN接收

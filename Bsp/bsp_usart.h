@@ -5,6 +5,6 @@
 #include "usart.h"
 
 extern void usart_SendCmd(uint8_t *cmd, uint8_t length);
-extern void uart_init_dma(UART_HandleTypeDef *huart);
+extern void uart_init_dma(UART_HandleTypeDef *huart, uint8_t *buffer, uint16_t size);
 
 #endif

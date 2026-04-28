@@ -1,7 +1,7 @@
 #include "bsp_oled.h"
 #include "OLED.h"
 
-static uint8_t OLED_Buffer[18]; // OLED显示缓冲区
+static uint8_t OLED_Buffer[32]; // OLED显示缓冲区
 
 void oled_init(void)
 {

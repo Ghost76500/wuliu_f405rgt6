@@ -10,15 +10,24 @@ typedef struct {
     uint8_t  color;       // 颜色 (红0x0A, 绿0x0B, 蓝0x0C等)
     uint16_t x_pos;       // 实际X坐标
     uint16_t y_pos;       // 实际Y坐标
+    uint16_t error_x;
+    uint16_t error_y;
 } Maxicam_Info_t;
 
 // 声明外部可以使用的全局变量
 extern Maxicam_Info_t g_maxicam_info;
 
-extern void MaxiCam_SendCommand(uint8_t cmd);
-extern void identify_materials(uint8_t num);
+extern uint8_t visual_data_ready; // 视觉数据就绪标志，供其他任务查询
 
-// 【修改点】长度改为10
-extern void maixcam_data_unpack(uint8_t maixcam_data[10]); 
+extern void maixcam_data_unpack(uint8_t maixcam_data[10]); // 解析 Maxicam 数据包
+
+extern void MaixCam_SendCommand(uint8_t cmd); // 发送命令给 Maxicam
+extern void identify_materials(uint8_t num); // 请求 Maxicam 识别物料
+extern void identify_color_rings(uint8_t num); // 请求 Maxicam 识别色环
+extern void identify_rings_with_materials(uint8_t num); // 请求 Maxicam 识别有物料的色环
+extern void visual_idle(void); // 视觉空闲时的处理函数，可以放一些默认动作或者状态重置
+
+extern void calculate_error(void); // 计算误差值，更新全局变量
+extern uint8_t is_error_little(void); // 检查误差是否足够小
 
 #endif // VISUAL_IDENTITY_H

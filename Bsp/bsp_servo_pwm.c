@@ -47,8 +47,51 @@ void bsp_gripper_state_set(uint16_t duty)
     __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, duty);
 }
 
-void bsp_gimbal_turn(uint16_t target_duty, uint16_t step_delay_ms)
+/**
+ * @brief 占空比限幅函数
+ * @param duty 占空比，范围500-2500，对应0-180度或0-360度
+ */
+uint16_t bsp_duty_limit(uint16_t duty)
 {
-    bsp_gimbal_angle_set(target_duty);
+    if (duty < 500) return 500;
+    if (duty > 2500) return 2500;
+    return duty;
+}
+
+/**
+ * @brief 云台转动函数
+ * @param num 角度编号
+ * @param step_delay_ms 停顿时间
+ */
+void gimbal_turn(uint16_t num, uint16_t step_delay_ms)
+{
+    uint16_t angle = num;
+    switch (angle)
+    {
+        case 1:
+            angle = GIMBAL_ONE_ANGLE;
+            break;
+        case 2:
+            angle = GIMBAL_TWO_ANGLE;
+            break;
+        case 3:
+            angle = GIMBAL_THREE_ANGLE;
+            break;
+        case 4:
+            angle = GIMBAL_BLUE_ANGLE; // 默认复位位置
+            break;
+        case 5:
+            angle = GIMBAL_GREEN_ANGLE; // 默认复位位置
+            break;
+        case 6:
+            angle = GIMBAL_RED_ANGLE; // 默认复位位置
+            break;
+        case 7:
+            angle = GIMBAL_NAWULIAO_ANGLE; // 默认复位位置
+            break;
+        default:
+            angle = GIMBAL_INIT_ANGLE; // 默认复位位置
+    }
+    bsp_gimbal_angle_set(angle);
     osDelay(step_delay_ms);
 }

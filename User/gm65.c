@@ -31,10 +31,8 @@ void data_receive(UART_HandleTypeDef *huart) // 传入uart句柄
     if (rx_index >= 2 && rx_data[rx_index-2] == '\r' && rx_data[rx_index-1] == '\n')
     {
       data_ready = 1;  // 标记数据完整，由主循环处理
-      // 发送消息到队列 (注意中断里最后一个参数超时时间必须是 0)
-      //osMessageQueuePut(gm65_queueHandle, &msg_length, 0, 0);
       // 拷贝数据到color_task数组
-        for (int i = 0; i < 6; i++)
+        for (int i = 0; i < 7; i++)
         {
             color_task[i] = rx_data[i];
         }
