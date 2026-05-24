@@ -219,7 +219,7 @@ void Chassis_Go_Pos(fp32 x_m, fp32 y_m, fp32 yaw_rad, uint16_t delay)
         osDelay(delay);
     }
     // 关闭位置环
-    position_disable();
+    // position_disable();
 }
 
 /*

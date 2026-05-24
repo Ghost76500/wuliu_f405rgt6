@@ -253,3 +253,32 @@ void can_chassis_init(void)
     osDelay(1);
     X_V2_En_Control(4, true, false);
 }
+
+/**
+ * @brief  打包底盘位姿数据到CAN发送数据帧中
+ * @param  x:    X轴坐标 (单位: m)
+ * @param  y:    Y轴坐标 (单位: m)
+ * @param  yaw:  偏航角 (单位: rad)
+ * @param  data: 输出的数据缓存指针 (至少6字节)
+ */
+void Update_OPS(float x, float y, float yaw)
+{
+    uint8_t data[8] = {0}; // CAN数据帧最多8字节，我们只用前6字节来传位姿
+    // 将浮点数乘以1000转为 int16_t (与解包时的 *0.001f 互逆)
+    int16_t x_raw = (int16_t)(x * 1000.0f);
+    int16_t y_raw = (int16_t)(y * 1000.0f);
+    int16_t yaw_raw = (int16_t)(yaw * 1000.0f);
+
+    // 拼装高低字节：高字节在前 (data[0], data[2], data[4])，低字节在后 (data[1], data[3], data[5])
+    data[0] = (uint8_t)(x_raw >> 8);
+    data[1] = (uint8_t)(x_raw & 0xFF);
+    
+    data[2] = (uint8_t)(y_raw >> 8);
+    data[3] = (uint8_t)(y_raw & 0xFF);
+    
+    data[4] = (uint8_t)(yaw_raw >> 8);
+    data[5] = (uint8_t)(yaw_raw & 0xFF); 
+
+    // 发送到 CAN1，ID为0x200，供里程计使用
+    BSP_CAN_Send_Msg(CAN_OPS_ID, data);
+}

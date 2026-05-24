@@ -43,7 +43,7 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
         __HAL_DMA_DISABLE_IT(huart4.hdmarx, DMA_IT_HT);
     }
 
-    if (huart->Instance == USART2)
+    if (huart->Instance == USART1)
     {
         // 1. 拿出一个空的快递纸箱 (在栈上分配，退出函数自动销毁)
         Uart_Msg_t tx_msg; 

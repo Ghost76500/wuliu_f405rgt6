@@ -1,6 +1,7 @@
 #include "bsp_servo_pwm.h"
 #include "tim.h"
 #include "cmsis_os2.h"
+#include "tower.h"
 
 /**
  * @brief 初始化云台和夹爪舵机 PWM

@@ -4,14 +4,16 @@
 #include "struct_typedef.h"
 #include "main.h" // 确保包含了 HAL 库的头文件
 
+#define MAXICAM_UART_HANDLE huart1
+
 // --- 这里我为你补充一个结构体，专门存解析好的数据，方便其他C文件调用 ---
 typedef struct {
     uint8_t  mode;        // 模式 (物料0x0A, 色环0x3A等)
     uint8_t  color;       // 颜色 (红0x0A, 绿0x0B, 蓝0x0C等)
-    uint16_t x_pos;       // 实际X坐标
-    uint16_t y_pos;       // 实际Y坐标
-    uint16_t error_x;
-    uint16_t error_y;
+    int16_t x_pos;       // 实际X坐标
+    int16_t y_pos;       // 实际Y坐标
+    int16_t error_x;
+    int16_t error_y;
 } Maxicam_Info_t;
 
 // 声明外部可以使用的全局变量
@@ -29,5 +31,6 @@ extern void visual_idle(void); // 视觉空闲时的处理函数，可以放一�
 
 extern void calculate_error(void); // 计算误差值，更新全局变量
 extern uint8_t is_error_little(void); // 检查误差是否足够小
+extern uint8_t is_calibration_error_little(void); // 检查校准误差是否足够小
 
 #endif // VISUAL_IDENTITY_H

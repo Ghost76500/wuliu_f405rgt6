@@ -12,7 +12,7 @@ static uint8_t rx_byte = 0;          // 每次中断接收1字节
 static volatile uint8_t rx_index = 0;         // 记录已接收字节数
 static volatile uint8_t data_ready = 0;       // 数据包完成标志
 
-uint8_t color_task[6]={0};
+uint8_t color_task[7]={0};
 
 void uart_init_it(UART_HandleTypeDef *huart)
 {
