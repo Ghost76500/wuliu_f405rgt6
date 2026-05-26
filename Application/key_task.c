@@ -18,9 +18,10 @@ void key_task(void *argument) {
         {
             bsp_led_toggle(CORE_ONE); // 按键1被点击时点亮LED1
             //bsp_test_angle_set(500); // 测试用：设置夹爪舵机到闭合位置
-            bsp_gripper_state_set(JIAZHUA_DA_OPEN); // 设置夹爪舵机状态
+            //bsp_gripper_state_set(JIAZHUA_DA_OPEN); // 设置夹爪舵机状态
+            bsp_gripper_state_set(JIAZHUA_CLOSE); // 设置夹爪舵机状态为闭合
             osDelay(500); // 延时500ms，等待夹爪动作完成
-            Motor_35_Move(Motor_35_DOWN, 52700);
+            //Motor_35_Move(Motor_35_DOWN, 52700);
             //bsp_gimbal_angle_set(GIMBAL_INIT_ANGLE); // 设置云台角度为初始角度
             //X_V2_Read_Sys_Params(1, S_VEL);
             //X_V2_Vel_Control(1, 0, 255, 100.0f, false); // 测试用：让电机1以1000速度运行，限流500mA
@@ -37,7 +38,8 @@ void key_task(void *argument) {
             X_V2_En_Control(4, false, false); // 关闭电机
 */
             //zdt_motor_test(); // 测试用：控制ZDT电机运行
-        
+            // Update_OPS(0.3, 0.5, 1.0);
+            //place_material(); // 测试用：执行放置物料动作
         }
         osDelay(10); // 延时10毫秒
   }

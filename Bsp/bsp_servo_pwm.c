@@ -79,12 +79,15 @@ void gimbal_turn(uint16_t num, uint16_t step_delay_ms)
             angle = GIMBAL_THREE_ANGLE;
             break;
         case 4:
+        case 51:
             angle = GIMBAL_BLUE_ANGLE; // 默认复位位置
             break;
         case 5:
+        case 50:
             angle = GIMBAL_GREEN_ANGLE; // 默认复位位置
             break;
         case 6:
+        case 49:
             angle = GIMBAL_RED_ANGLE; // 默认复位位置
             break;
         case 7:

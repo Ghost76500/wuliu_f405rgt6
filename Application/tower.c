@@ -7,6 +7,11 @@
 #include "visual_identity.h"
 #include "bsp_buzzer_pwm.h"
 #include "chassis_task.h"
+#include "position_task.h"
+
+
+const int16_t target_x = 8;  // 目标误差X
+const int16_t target_y = 7;  // 目标误差Y
 
 /*
  * @brief 识别姿态
@@ -39,11 +44,11 @@ void reset_posture(void)
  */
 void grab_plate_material(void)
 {
-    Motor_35_Move(Motor_35_DOWN, 21200);
-    osDelay(1200);
+    Motor_35_Move(Motor_35_DOWN, WULIAOPAN);
+    osDelay(1300);
     bsp_gripper_state_set(JIAZHUA_CLOSE);
-    Motor_35_Move(Motor_35_UP, 21200);
-    osDelay(1200);
+    Motor_35_Move(Motor_35_UP, WULIAOPAN);
+    osDelay(1300);
 }
 
 /*
@@ -53,16 +58,16 @@ void grab_plate_material(void)
  */
 void place_material(void)
 {
-    Motor_28_Move(QIAN, 1700);
+    Motor_28_Move(QIAN, NAWULIAO_28); // 夹爪伸出
     osDelay(200);
-    Motor_35_Move(Motor_35_DOWN, 9500);
-    osDelay(800);
+    Motor_35_Move(Motor_35_DOWN, YUNHUO);
+    osDelay(900);
     bsp_gripper_state_set(JIAZHUA_XIAO_OPEN);
     osDelay(200);
-    Motor_28_Move(HOU, 1700);
+    Motor_28_Move(HOU, NAWULIAO_28);
     osDelay(200);
-    Motor_35_Move(Motor_35_UP, 9500);
-    osDelay(800);
+    Motor_35_Move(Motor_35_UP, YUNHUO);
+    osDelay(1000);
     
 }
 
@@ -71,27 +76,44 @@ void place_material(void)
  * @param void
  * @retval void
  */
-void grab_floor_material(void)
+void grab_materials_ground(uint8_t color, uint8_t first)
 {
-    // 先张开夹爪并伸出到地面抓取位置
-    bsp_gripper_state_set(JIAZHUA_DA_OPEN);
+    gimbal_turn(color, 2000); // 云台转到拿物料位置，7对应拿物料位置，放下夹爪
+    switch (color)
+    {
+    case 50:
+        Motor_28_Move(QIAN, GROUND_GREEN); // 夹爪伸出
+        break;
+    case 49:
+        Motor_28_Move(QIAN, GROUND_RED); // 夹爪伸出
+        break;
+    case 51:
+        Motor_28_Move(QIAN, GROUND_BLUE); // 夹爪伸出
+        break;
+    }
+    bsp_gripper_state_set(JIAZHUA_XIAO_OPEN); // 夹爪张开一点
     osDelay(100);
-    Motor_28_Move(QIAN, 1700);
-    osDelay(200);
-
-    // 下探抓取地面物料
-    Motor_35_Move(Motor_35_DOWN, DIMIAN);
-    osDelay(1500);
-
-    // 闭合夹爪夹住物料
+    Motor_35_Move(Motor_35_DOWN, DIMIAN); // 降下夹爪抓物料
+    osDelay(1800);
+    // 夹爪闭合
     bsp_gripper_state_set(JIAZHUA_CLOSE);
     osDelay(100);
-
-    // 抬起并收回，避免拖地
-    Motor_35_Move(Motor_35_UP, DIMIAN);
-    osDelay(1700);
-    Motor_28_Move(HOU, 1700);
-    osDelay(200);
+    Motor_35_Move(Motor_35_UP, DIMIAN); // 抬起
+    osDelay(1900);
+    switch (color)
+    {
+    case 50:
+        Motor_28_Move(HOU, GROUND_GREEN); // 夹爪收回
+        break;
+    case 49:
+        Motor_28_Move(HOU, GROUND_RED); // 夹爪收回
+        break;
+    case 51:
+        Motor_28_Move(HOU, GROUND_BLUE); // 夹爪收回
+        break;
+    }
+    // Motor_28_Move(HOU, NAWULIAO_28); // 夹爪收回来,准备转
+    osDelay(100);
 }
 
 /*
@@ -137,19 +159,22 @@ void grab_turntable_A(uint8_t color, uint8_t num)
  */
 void color_ring_calibration(uint8_t color)
 {
-    const fp32 error_to_speed = 0.00125f;
-    const fp32 max_speed = 0.0125f;
-    const uint32_t control_period_ms = 100U;
+    const fp32 error_to_speed = 0.00160f;
+    const fp32 max_speed = 0.0150f;
+    const uint32_t control_period_ms = 50U;
     fp32 x_cmd = 0.0f;
     fp32 y_cmd = 0.0f;
     fp32 yaw_hold = 0.0f;
     const chassis_move_t *chassis = get_chassis_move_data();
 
+
     if (chassis != NULL)
     {
         yaw_hold = chassis->chassis_yaw;
     }
-
+    gimbal_turn(50, 2000);
+    bsp_gripper_state_set(JIAZHUA_DA_OPEN); // 夹爪完全张开，避免挡住摄像头视野
+    osDelay(100);
     visual_data_ready = 0;
     identify_color_rings(color);
 
@@ -158,12 +183,13 @@ void color_ring_calibration(uint8_t color)
         osDelay(control_period_ms);
     }
 
+    position_disable(); // 关闭位置环，进入底盘速度控制模式
     chassis_cmd_disable_world_frame(); // 关闭世界系，进入车体系控制
 
     while (is_calibration_error_little() == 0)
     {
-        int16_t error_x = g_maxicam_info.error_x;
-        int16_t error_y = g_maxicam_info.error_y;
+        int16_t error_x = g_maxicam_info.error_x - target_x;
+        int16_t error_y = g_maxicam_info.error_y - target_y;
 
         // error_x>0: target on right -> move right (x negative). error_y>0: target down -> move back (y negative).
         x_cmd = error_to_speed * (fp32)error_y; 
@@ -188,7 +214,7 @@ void color_ring_calibration(uint8_t color)
         }
         
         chassis_set_control_target(x_cmd, y_cmd, yaw_hold);
-        osDelay(32); 
+        osDelay(50); 
         chassis_set_control_target(0.0f, 0.0f, yaw_hold);
         osDelay(control_period_ms);
     }
@@ -209,16 +235,16 @@ void color_ring_calibration(uint8_t color)
 void grab_materials_car(uint8_t order, uint8_t first)     //车上抓取物料
 {
     gimbal_turn(order, 2000); // 云台转到拿物料位置
-    Motor_28_Move(QIAN, 1700); // 夹爪伸出
+    Motor_28_Move(QIAN, NAWULIAO_28); // 夹爪伸出
     bsp_gripper_state_set(JIAZHUA_XIAO_OPEN); // 夹爪张开一点
     osDelay(100);
     Motor_35_Move(Motor_35_DOWN, YUNHUO);
     osDelay(1200);
     bsp_gripper_state_set(JIAZHUA_CLOSE); // 夹爪闭合
     osDelay(100);
-    Motor_35_Move(Motor_35_UP, 1500); // 抬起物料
-    osDelay(400);
-    Motor_28_Move(HOU, 1700); // 夹爪收回来,准备转
+    Motor_35_Move(Motor_35_UP, TAIQI); // 抬起物料
+    osDelay(800);
+    Motor_28_Move(HOU, NAWULIAO_28); // 夹爪收回来,准备转
     osDelay(300);
 
 }
@@ -252,40 +278,42 @@ void put_materials_ground(uint8_t color, uint16_t none)     //地面放物料
     case 4:
         Motor_28_Move(QIAN, GROUND_RED); // 夹爪伸出
         osDelay(200);
-        Motor_35_Move(Motor_35_DOWN, 44700); // 降下夹爪
+        Motor_35_Move(Motor_35_DOWN, DIMIAN); // 降下夹爪
         osDelay(1500);
         bsp_gripper_state_set(JIAZHUA_DA_OPEN); // 夹爪张开一点,放置物料
         osDelay(200);
+        Motor_35_Move(Motor_35_UP, DIMIAN); // 升高夹爪，完成放置动作
+        osDelay(1900);
         Motor_28_Move(HOU, GROUND_RED); // 夹爪收回来
         osDelay(300);
-        Motor_35_Move(Motor_35_UP, 52700); // 升高夹爪，完成放置动作
-        osDelay(1700);
-
+        
         break;
     case 5:
         Motor_28_Move(QIAN, GROUND_GREEN);   
         osDelay(200);
-        Motor_35_Move(Motor_35_DOWN, 44700);
+        Motor_35_Move(Motor_35_DOWN, DIMIAN);
         osDelay(1500);
         bsp_gripper_state_set(JIAZHUA_DA_OPEN); // 夹爪张开一点,放置物料
         osDelay(200);
+        Motor_35_Move(Motor_35_UP, DIMIAN); // 升高夹爪，完成放置动作
+        osDelay(1900);
         Motor_28_Move(HOU, GROUND_GREEN); // 夹爪收回来
         osDelay(300);
-        Motor_35_Move(Motor_35_UP, 52700); // 升高夹爪，完成放置动作
-        osDelay(1700);
+        
 
         break;
     case 6:
         Motor_28_Move(QIAN, GROUND_BLUE); // 夹爪伸出
         osDelay(200);
-        Motor_35_Move(Motor_35_DOWN, 44700);
+        Motor_35_Move(Motor_35_DOWN, DIMIAN);
         osDelay(1500);
         bsp_gripper_state_set(JIAZHUA_DA_OPEN); // 夹爪张开一点,放置物料
         osDelay(200);
+        Motor_35_Move(Motor_35_UP, DIMIAN); // 升高夹爪，完成放置动作
+        osDelay(1900);
         Motor_28_Move(HOU, GROUND_BLUE); // 夹爪收回来
         osDelay(300);
-        Motor_35_Move(Motor_35_UP, 52700); // 升高夹爪，完成放置动作
-        osDelay(1700);
+        
 
         break;
     
@@ -294,4 +322,15 @@ void put_materials_ground(uint8_t color, uint16_t none)     //地面放物料
     }
     osDelay(200);
 
+}
+
+/*
+ * @brief 车上放物料
+ * @param order      1/2/3
+ * @retval void
+ */
+void put_materials_car(uint8_t order)
+{
+    gimbal_turn(order, 2000); // 云台转到放物料位置
+    place_material(); // 放置物料
 }

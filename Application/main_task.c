@@ -13,6 +13,7 @@
 #include "zdt_motor.h"
 #include "tower.h"
 #include <string.h>
+#include "bsp_led.h"
 
 /*-----------------------------------变量定义---------------------------------------*/
 
@@ -42,23 +43,24 @@ void grab_turntable_test(void);
 
 void main_task(void *argument)
 {
+    osDelay(3000); // 任务启动延时，等待系统稳定
     can_chassis_init(); // 使能底盘can步进电机驱动板
-    bsp_gimbal_angle_set(GIMBAL_INIT_ANGLE); // 云台复位
-    //bsp_gimbal_angle_set(GIMBAL_GREEN_ANGLE); // 云台转到绿色位置，准备放下夹爪，测试用
+    //bsp_gimbal_angle_set(GIMBAL_INIT_ANGLE); // 云台复位
+    bsp_gimbal_angle_set(GIMBAL_GREEN_ANGLE); // 云台转到绿色位置，准备放下夹爪，测试用
     bsp_gripper_state_set(JIAZHUA_INIT); // 夹爪复位
     //bsp_gripper_state_set(JIAZHUA_DA_OPEN); // 夹爪完全张开，测试用
     uart_init_it(&huart5);
     visual_idle();
-    osDelay(3000); // 任务启动延时，等待外设、速度环、位置环完成初始化
+    osDelay(2000); // 任务启动延时，等待外设、速度环、位置环完成初始化
     // 蜂鸣器响一下，提示任务开始
     // buzzer_rings(2000, 10, 500); // 2kHz频率，10音量，响500ms
+    //identify_color_rings(50);
+    //color_ring_calibration(50);
+    //while(1){osDelay(100);}
 
-    color_ring_calibration(50);
-    while(1){osDelay(100);}
-
-    //uint8_t tmp[7] = {50,49,51,0,51,50,49};
-    //memcpy(color_task, tmp, sizeof(tmp));
-
+    uint8_t tmp[7] = {50,49,51,0,51,50,49};
+    memcpy(color_task, tmp, sizeof(tmp));
+    
     for (;;)
     {
         /*
@@ -78,12 +80,12 @@ void main_task(void *argument)
         Chassis_Go_Pos(-0.217, 1.076, ZUOBIAN, 200); // 跑图：二维码和物料盘之间的路口
 
         Chassis_Go_Pos(-1.974, 1.069, ZUOBIAN, 200); // 跑图：加工区
-        */
+        
         Chassis_Go_Pos(-1.974, 1.069, HOUMIAN, 200); // 转向朝下,准备加工物料
-
+*/
         // 这里是加工物料的代码
         color_ring_calibration(50); // 校准色环
-        /*
+        
         grab_materials_car(1, 0);
         put_materials_ground(color_task[0],0);
         grab_materials_car(2, 0);
@@ -91,7 +93,7 @@ void main_task(void *argument)
 		grab_materials_car(3, 0);
 		put_materials_ground(color_task[2],0);
 		
-        //while(1){osDelay(100);}
+        while(1){osDelay(100);}
 
         grab_materials_ground(color_task[0],1);
 		put_materials_car(1);
@@ -101,16 +103,19 @@ void main_task(void *argument)
 		put_materials_car(3);
 
         reset_posture();
-*/
-        while(1){osDelay(100);}
+
+        Update_OPS(-1.976, 1.067, 0.0);
+        //while(1){osDelay(100);}
 
         Chassis_Go_Pos(-1.897, 1.897, HOUMIAN, 200); // 跑图：地图左上角
         Chassis_Go_Pos(-1.897, 1.897, ZUOBIAN, 200); // 转向朝左
-
+//while(1){osDelay(100);}
         Chassis_Go_Pos(-1.055, 1.985, ZUOBIAN, 200); // 放置区
 
         // 这里是放物料的代码
 
+
+        Update_OPS(-1.070, 1.971, 0.0);
         Chassis_Go_Pos(-0.163, 1.857, ZUOBIAN, 200); // 地图右上角
         Chassis_Go_Pos(-0.163, 1.857, QIANMIAN, 200); // 转向朝前
 

@@ -61,7 +61,7 @@ void BSP_CAN_Send_Msg(uint32_t std_id, uint8_t *data)
 
     // 3. 发送
     // 注意：这里要用 hcan (看你第18行extern的是 hcan 还是 hcan1，要保持一致)
-    if (HAL_CAN_AddTxMessage(&hcan2, &TxHeader, TxData, &TxMailbox) != HAL_OK)
+    if (HAL_CAN_AddTxMessage(&hcan1, &TxHeader, TxData, &TxMailbox) != HAL_OK)
     {
         // 这里可以加错误处理
         bsp_led_toggle(CORE_THREE);
