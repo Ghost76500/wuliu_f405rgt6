@@ -14,7 +14,7 @@
 #define POSITION_CONTROL_TIME      0.05f
 #define POSITION_CONTROL_TIME_MS   50
 
-#define CHASSIS_POSITION_PID_KP         0.9f
+#define CHASSIS_POSITION_PID_KP         1.2f
 #define CHASSIS_POSITION_PID_KI         0.0f
 #define CHASSIS_POSITION_PID_KD         0.05f
 #define CHASSIS_POSITION_PID_MAX_OUT    0.60f
@@ -29,7 +29,7 @@
 #define CHASSIS_POSITION_X_LIMIT_M         2.3f
 #define CHASSIS_POSITION_Y_LIMIT_M         2.3f
 // 定义航向角到达的阈值，0.05 rad 大约是 2.8 度。你可以根据实际需求微调。
-#define CHASSIS_YAW_ARRIVE_THRESHOLD       0.006f
+#define CHASSIS_YAW_ARRIVE_THRESHOLD       0.007f
 
 #define YOUBIAN -1.5707963f
 #define ZUOBIAN 1.570963f

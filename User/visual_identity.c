@@ -34,9 +34,9 @@ void identify_materials(uint8_t num)
     uint8_t cmd = 0;
     switch(num)
     {
-        case '1': cmd = 0x0A; break;
-        case '2': cmd = 0x0B; break;
-        case '3': cmd = 0x0C; break;
+        case '1': case 1: cmd = 0x0A; break;
+        case '2': case 2: cmd = 0x0B; break;
+        case '3': case 3: cmd = 0x0C; break;
         default: return; 
     }
     MaixCam_SendCommand(cmd);
@@ -58,9 +58,9 @@ void identify_color_rings(uint8_t num)
     uint8_t cmd = 0;
     switch(num)
     {
-        case '1': cmd = 0x3A; break; // 红色环
-        case '2': cmd = 0x3B; break; // 绿色环 (Python 端已扩展支持)
-        case '3': cmd = 0x3C; break; // 蓝色环 (Python 端已扩展支持)
+        case '1': case 1: cmd = 0x3A; break; // 红色环
+        case '2': case 2: cmd = 0x3B; break; // 绿色环 (Python 端已扩展支持)
+        case '3': case 3: cmd = 0x3C; break; // 蓝色环 (Python 端已扩展支持)
         default: return; 
     }
     MaixCam_SendCommand(cmd);
@@ -75,9 +75,9 @@ void identify_rings_with_materials(uint8_t num)
     uint8_t cmd = 0;
     switch(num)
     {
-        case '1': cmd = 0x6A; break; // 有物料的红色环
-        case '2': cmd = 0x6B; break; // 有物料的绿色环 (Python 端已扩展支持)
-        case '3': cmd = 0x6C; break; // 有物料的蓝色环 (Python 端已扩展支持)
+        case '1': case 1: cmd = 0x6A; break; // 有物料的红色环
+        case '2': case 2: cmd = 0x6B; break; // 有物料的绿色环 (Python 端已扩展支持)
+        case '3': case 3: cmd = 0x6C; break; // 有物料的蓝色环 (Python 端已扩展支持)
         default: return; 
     }
     MaixCam_SendCommand(cmd);
@@ -125,13 +125,19 @@ void calculate_error(void)
  * @param  在main_task.c里调用，等待物料移动到指定位置（误差足够小）后再执行抓取动作
  * @note   none
  */
-uint8_t is_error_little(void)
+uint8_t is_error_little(int8_t error_x, int8_t error_y, uint8_t count)
 {
-    if (g_maxicam_info.error_x < 30 && g_maxicam_info.error_x > -30 &&
-        g_maxicam_info.error_y < 30 && g_maxicam_info.error_y > -30)
+    static uint8_t calibration_count = 0;
+    if (g_maxicam_info.error_x < error_x && g_maxicam_info.error_x > -error_x &&
+        g_maxicam_info.error_y < error_y && g_maxicam_info.error_y > -error_y)
     {
         bsp_led_on(CORE_TWO); // 误差足够小，切换LED状态以示确认
-        return 1;
+        calibration_count++;
+        if (calibration_count >= count) // 连续满足条件传入的次数才返回1，避免偶尔的误差过小导致误判
+        {
+            calibration_count = 0; // 重置计数器
+            return 1;
+        }
     }
     return 0;
     bsp_led_off(CORE_TWO); // 误差较大，保持LED关闭

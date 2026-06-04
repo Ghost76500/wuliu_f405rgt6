@@ -30,7 +30,7 @@ extern void identify_rings_with_materials(uint8_t num); // 请求 Maxicam 识别
 extern void visual_idle(void); // 视觉空闲时的处理函数，可以放一些默认动作或者状态重置
 
 extern void calculate_error(void); // 计算误差值，更新全局变量
-extern uint8_t is_error_little(void); // 检查误差是否足够小
+extern uint8_t is_error_little(int8_t error_x, int8_t error_y, uint8_t count); // 检查误差是否足够小
 extern uint8_t is_calibration_error_little(void); // 检查校准误差是否足够小
 
 #endif // VISUAL_IDENTITY_H

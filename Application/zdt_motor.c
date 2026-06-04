@@ -25,7 +25,7 @@ void zdt_motor_test(void)
  */
 void Motor_35_Move(uint8_t dir, fp32 clk)
 {
-    Emm_V5_Pos_Control(Motor_35_ADDR, dir, 3000, 245, clk, false, false);
+    Emm_V5_Pos_Control(Motor_35_ADDR, dir, 3000, 0, clk, false, false);
 }
 
 /*
