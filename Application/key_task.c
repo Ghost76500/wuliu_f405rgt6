@@ -42,11 +42,13 @@ void key_task(void *argument) {
             //place_material(); // 测试用：执行放置物料动作
             //Motor_35_Move(Motor_35_DOWN, DIMIAN);
             //bsp_gimbal_angle_set(angle); // 夹爪张开一点,放置物料
-            Motor_28_Move(QIAN, 3100);
+            //Motor_28_Move(QIAN, 3100);
             //osDelay(100);
             //bsp_gimbal_angle_set(GIMBAL_RED_ANGLE);
-            
-            
+            //grab_materials_car(1, 0);
+            //place_material();
+            //grab_materials_ground(49,0);
+            put_materials_ground(49, 0);
         }
         osDelay(10); // 延时10毫秒
   }

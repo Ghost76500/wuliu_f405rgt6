@@ -15,9 +15,9 @@
 #define GIMBAL_TWO_ANGLE 2130 // 测试用占空比
 #define GIMBAL_THREE_ANGLE 1960 // 测试用占空比
 
-#define GIMBAL_BLUE_ANGLE 1285 // 蓝色位置占空比
+#define GIMBAL_BLUE_ANGLE 1280 // 蓝色位置占空比
 #define GIMBAL_GREEN_ANGLE 955
-#define GIMBAL_RED_ANGLE 645
+#define GIMBAL_RED_ANGLE 650
 
 #define GIMBAL_NAWULIAO_ANGLE 955
 
@@ -33,16 +33,17 @@
 
 #define YUNHUO 9500 + MECHANICAL_ERROR_35 // 大约0.7ms
 #define WULIAOPAN 21200 + MECHANICAL_ERROR_35 // 大约1.0s
-#define DIMIAN 54000 + MECHANICAL_ERROR_35 // 大约1.5s
+#define DIMIAN 53000 + MECHANICAL_ERROR_35 // 大约1.5s
 #define TAIQI 9500 + MECHANICAL_ERROR_35 // 把物料从物料盘里拿起来
 #define MADUO 23000 + MECHANICAL_ERROR_35 // 物料叠叠乐
+#define SHIBIE 13000 + MECHANICAL_ERROR_35 // 识别物料高度
 
 #define QIAN 1
 #define HOU 0
 
 #define GROUND_GREEN 0
-#define GROUND_RED 2250
-#define GROUND_BLUE 1700
+#define GROUND_RED 2110
+#define GROUND_BLUE 1720
 #define WULIAOPAN_MATERIAL 3300
 
 #define NAWULIAO_28 1550 // 拿车上物料的脉冲数

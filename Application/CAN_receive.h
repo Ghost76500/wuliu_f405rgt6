@@ -14,7 +14,7 @@
 // 如你的上位机/陀螺仪发送端使用不同缩放，请同步修改该比例。
 #define CAN_GYRO_YAW_SCALE (0.0001f)
 #define CAN_DISTENCE_SCALE (0.001f)
-#define CHASSIS_MOTOR_RPM_LIMIT (250)
+#define CHASSIS_MOTOR_RPM_LIMIT (350)
 
 // 底盘四个电机方向修正：1为正向，-1为反向
 #define CHASSIS_MOTOR1_DIR (1)

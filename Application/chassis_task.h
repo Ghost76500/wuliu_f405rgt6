@@ -47,16 +47,16 @@
 // 电机到底盘中心的距离，单位米
 #define MOTOR_DISTANCE_TO_CENTER 0.13862f // 138.62697mm
 // 单个底盘电机最大速度
-#define MAX_WHEEL_SPEED 1.2f
+#define MAX_WHEEL_SPEED 1.5f
 // 底盘运动过程最大前进速度
-#define NORMAL_MAX_CHASSIS_SPEED_X 1.2f
+#define NORMAL_MAX_CHASSIS_SPEED_X 1.5f
 // 底盘运动过程最大平移速度
-#define NORMAL_MAX_CHASSIS_SPEED_Y 1.2f
+#define NORMAL_MAX_CHASSIS_SPEED_Y 1.5f
 
 // 底盘前后运动加速度
-#define CHASSIS_ACCEL_X_NUM 0.15f
+#define CHASSIS_ACCEL_X_NUM 0.14f
 // 底盘左右运动加速度
-#define CHASSIS_ACCEL_Y_NUM 0.15f
+#define CHASSIS_ACCEL_Y_NUM 0.14f
 
 #define CHASSIS_WZ_SET_SCALE 1.0f // 底盘旋转速度缩放系数
 
@@ -93,10 +93,10 @@
 #define JGB37_MOTOR_SPEED_PID_MAX_OUT 100.0f // 
 #define JGB37_MOTOR_SPEED_PID_MAX_IOUT 120.0f // 
 // 底盘旋转跟随PID
-#define CHASSIS_FOLLOW_GIMBAL_PID_KP 4.0f
+#define CHASSIS_FOLLOW_GIMBAL_PID_KP 5.0f
 #define CHASSIS_FOLLOW_GIMBAL_PID_KI 0.0f
 #define CHASSIS_FOLLOW_GIMBAL_PID_KD 0.18f
-#define CHASSIS_FOLLOW_GIMBAL_PID_MAX_OUT 1.8f
+#define CHASSIS_FOLLOW_GIMBAL_PID_MAX_OUT 2.4f
 #define CHASSIS_FOLLOW_GIMBAL_PID_MAX_IOUT 0.2f
 
 /*-----------------------------------数据结构定义-----------------------------------*/

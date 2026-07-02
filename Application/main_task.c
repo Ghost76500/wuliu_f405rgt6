@@ -37,8 +37,6 @@ static void get_task_code(void);
  */
 static void show_task_code(void);
 
-void grab_turntable_test(void);
-
 /*-----------------------------------函数实现-----------------------------------*/
 
 void main_task(void *argument)
@@ -74,7 +72,11 @@ void main_task(void *argument)
 */
     for (;;)
     {
-        //while(1){osDelay(100);} // 无限循环，等待任务结束
+        Chassis_Go_Pos(0.0, 0.2, QIANMIAN, 200);
+        Chassis_Go_Pos(0.0, 0.0, QIANMIAN, 200);
+        Chassis_Go_Pos(0.0, 0.2, QIANMIAN, 200);
+        Chassis_Go_Pos(0.0, 0.0, QIANMIAN, 200);
+        while(1){osDelay(100);} // 无限循环，等待任务结束
         Chassis_Go_Pos(-0.15, 0.15, QIANMIAN, 200); // 出库
         
         Chassis_Go_Pos(-0.229, 0.77, QIANMIAN, 200); // 扫码位置
@@ -88,13 +90,14 @@ void main_task(void *argument)
         grab_turntable_B(color_task[2], 3);
 
 //while(1){osDelay(100);}
-        Chassis_Go_Pos(-0.225, 1.076, ZUOBIAN, 200); // 跑图：二维码和物料盘之间的路口
+        Chassis_Go_Pos(-0.145, 1.475, QIANMIAN, 200); // 稍微退后一点，避免出界
+        Chassis_Go_Pos(-0.250, 1.076, ZUOBIAN, 200); // 跑图：二维码和物料盘之间的路口
 
         Chassis_Go_Pos(-1.974, 1.069, ZUOBIAN, 200); // 跑图：加工区
         
         Chassis_Go_Pos(-1.974, 1.069, HOUMIAN, 200); // 转向朝下,准备加工物料
 //Chassis_Go_Pos(-1.960, 1.049, HOUMIAN, 200);
-        // 这里是加工物料的代码
+        // 这里是第一轮加工物料的代码
         color_ring_calibration(50); // 校准色环
         
         //while(1){osDelay(100);}
@@ -107,7 +110,7 @@ void main_task(void *argument)
 		
         //while(1){osDelay(100);}
 
-        grab_materials_ground(color_task[0],1);
+        grab_materials_ground(color_task[0],0);
 		put_materials_car(1);
 		grab_materials_ground(color_task[1],0);
 		put_materials_car(2);
@@ -119,8 +122,8 @@ void main_task(void *argument)
         Update_OPS(-1.960, 1.049, 0.0); // 加工区更新坐标
         //while(1){osDelay(100);}
 
-        Chassis_Go_Pos(-1.897, 1.897, HOUMIAN, 200); // 跑图：地图左上角
-        Chassis_Go_Pos(-1.897, 1.897, ZUOBIAN, 200); // 转向朝左
+        Chassis_Go_Pos(-1.887, 1.887, HOUMIAN, 200); // 跑图：地图左上角
+        Chassis_Go_Pos(-1.887, 1.887, ZUOBIAN, 200); // 转向朝左
 //while(1){osDelay(100);}
         Chassis_Go_Pos(-1.079, 1.965, ZUOBIAN, 200); // 放置区
 
@@ -149,16 +152,16 @@ void main_task(void *argument)
         grab_turntable_B(color_task[5], 2);
         grab_turntable_B(color_task[6], 3);
 //while(1){osDelay(100);}
-        Chassis_Go_Pos(-0.225, 1.076, ZUOBIAN, 200); // 跑图：二维码和物料盘之间的路口
+        Chassis_Go_Pos(-0.145, 1.475, QIANMIAN, 200); // 稍微退后一点，避免出界
+        Chassis_Go_Pos(-0.250, 1.076, ZUOBIAN, 200); // 跑图：二维码和物料盘之间的路口
 
         Chassis_Go_Pos(-1.974, 1.069, ZUOBIAN, 200); // 跑图：加工区
         Chassis_Go_Pos(-1.974, 1.069, HOUMIAN, 200); // 转向朝下，准备加工物料
 
-        // 这里是加工物料的代码
+        // 这里是第二轮加工物料的代码
         color_ring_calibration(50); // 校准色环
         
         //while(1){osDelay(100);}
-        // 这里是第二轮加工物料的代码
         grab_materials_car(1, 0);
         put_materials_ground(color_task[4],0);
         grab_materials_car(2, 0);
@@ -175,8 +178,8 @@ void main_task(void *argument)
 		grab_materials_ground(color_task[6],0); 
 		put_materials_car(3);
 
-        Chassis_Go_Pos(-1.897, 1.897, HOUMIAN, 200); // 跑图：地图左上角
-        Chassis_Go_Pos(-1.897, 1.897, ZUOBIAN, 200); // 转向朝左
+        Chassis_Go_Pos(-1.887, 1.887, HOUMIAN, 200); // 跑图：地图左上角
+        Chassis_Go_Pos(-1.887, 1.887, ZUOBIAN, 200); // 转向朝左
 
         Chassis_Go_Pos(-1.079, 1.965, ZUOBIAN, 200); // 放置区
 
@@ -230,7 +233,7 @@ static void show_task_code(void)
 void grab_turntable_test(void)
 {
     osDelay(100);
-    gimbal_turn(7, 2000); // 云台转到拿物料位置，7对应拿物料位置，放下夹爪
+    gimbal_turn(7, 1900); // 云台转到拿物料位置，7对应拿物料位置，放下夹爪
     bsp_gripper_state_set(JIAZHUA_DA_OPEN); // 夹爪完全张开
     osDelay(100);
 
@@ -240,7 +243,7 @@ void grab_turntable_test(void)
     bsp_gripper_state_set(JIAZHUA_CLOSE);
     Emm_V5_Pos_Control(1, Motor_35_UP, 3000, 245, 21200, false, false);
     osDelay(1200);
-    gimbal_turn(1, 2000); // 放到一号位
+    gimbal_turn(1, 1900); // 放到一号位
     Emm_V5_Pos_Control(1, Motor_35_DOWN, 3000, 245, 9500, false, false);
     osDelay(800);
     bsp_gripper_state_set(JIAZHUA_XIAO_OPEN);
