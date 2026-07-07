@@ -396,7 +396,7 @@ void color_materials_calibration(uint8_t color, uint8_t mode)
         if (mode == 1)
         {
             timeout++;
-            if (timeout > 80) // 大约6秒钟还没对准？算了，放弃微调，继续往下走正常抓取流程
+            if (timeout > 80) // 大约4秒钟还没对准？算了，放弃微调，继续往下走正常抓取流程
             {
                 break;
             }

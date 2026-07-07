@@ -41,14 +41,15 @@ static void show_task_code(void);
 
 void main_task(void *argument)
 {
-    osDelay(3000); // 任务启动延时，等待系统稳定
+    osDelay(3000); // 任务启动延时，等待系统稳定，硬件复位
     can_chassis_init(); // 使能底盘can步进电机驱动板
     bsp_gimbal_angle_set(GIMBAL_INIT_ANGLE); // 云台复位
     //bsp_gimbal_angle_set(GIMBAL_GREEN_ANGLE); // 云台转到绿色位置，准备放下夹爪，测试用
     bsp_gripper_state_set(JIAZHUA_INIT); // 夹爪复位
     //bsp_gripper_state_set(JIAZHUA_DA_OPEN); // 夹爪完全张开，测试用
-    uart_init_it(&huart5);
-    visual_idle();
+    uart_init_it(&huart5); // 初始化GM65串口中断接收
+    visual_idle(); // 发送停止信息，告诉maixcam停止识别
+    Motor_28_Move(QIAN, WAITING); // 夹爪伸出，准备抓物料
     osDelay(1000); // 任务启动延时，等待外设、速度环、位置环完成初始化
     // 蜂鸣器响一下，提示任务开始
     // buzzer_rings(2000, 10, 500); // 2kHz频率，10音量，响500ms
@@ -61,24 +62,18 @@ void main_task(void *argument)
     uint8_t tmp[7] = {50,49,51,0,51,50,49};
     //memcpy(color_task, tmp, sizeof(tmp));
     //color_materials_calibration(51, 0);
-    /*
-    Chassis_Go_Pos(0.0, 0.0, QIANMIAN, 100);
-    grab_turntable_B(color_task[0], 1);
-    Chassis_Go_Pos(0.0, 0.0, QIANMIAN, 100);
-    grab_turntable_B(color_task[1], 2);
-    Chassis_Go_Pos(0.0, 0.0, QIANMIAN, 100);
-    grab_turntable_B(color_task[2], 3);
-    Chassis_Go_Pos(0.0, 0.0, QIANMIAN, 100);
-*/
+
+    while (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_9) == GPIO_PIN_SET) // 等待按下开始按键
+    {
+        osDelay(100);
+    }
+    
     for (;;)
     {
-        Chassis_Go_Pos(0.0, 0.2, QIANMIAN, 200);
-        Chassis_Go_Pos(0.0, 0.0, QIANMIAN, 200);
-        Chassis_Go_Pos(0.0, 0.2, QIANMIAN, 200);
-        Chassis_Go_Pos(0.0, 0.0, QIANMIAN, 200);
-        while(1){osDelay(100);} // 无限循环，等待任务结束
+        // while(1){osDelay(100);} // 无限循环
+        osDelay(100);
         Chassis_Go_Pos(-0.15, 0.15, QIANMIAN, 200); // 出库
-        
+        Motor_28_Move(HOU, WAITING); // 收回机械臂
         Chassis_Go_Pos(-0.229, 0.77, QIANMIAN, 200); // 扫码位置
         get_task_code();
         show_task_code();

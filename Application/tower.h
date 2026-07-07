@@ -45,6 +45,7 @@
 #define GROUND_RED 2110
 #define GROUND_BLUE 1720
 #define WULIAOPAN_MATERIAL 3300
+#define WAITING 1300
 
 #define NAWULIAO_28 1550 // 拿车上物料的脉冲数
 
