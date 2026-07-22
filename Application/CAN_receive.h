@@ -60,6 +60,7 @@ extern volatile float can_distence_x_m;
 extern volatile float can_distence_y_m;
 extern volatile uint8_t can_odom_new_data_flag;
 extern void can_chassis_init(void); // 使能底盘can步进电机驱动板
+extern void can_chassis_ready_mode(void); // 失能底盘can步进电机驱动板，调整位置
 extern void Update_OPS(float x, float y, float yaw); // 设置ops
 
 #endif /* CAN_RECEIVE_H */

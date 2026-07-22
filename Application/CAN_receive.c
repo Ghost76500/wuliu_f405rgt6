@@ -254,6 +254,18 @@ void can_chassis_init(void)
     X_V2_En_Control(4, true, false);
 }
 
+// 失能电机，调整位置
+void can_chassis_ready_mode(void)
+{
+    X_V2_En_Control(1, false, false);
+    osDelay(1);
+    X_V2_En_Control(2, false, false);
+    osDelay(1);
+    X_V2_En_Control(3, false, false);
+    osDelay(1);
+    X_V2_En_Control(4, false, false);
+}
+
 /**
  * @brief  打包底盘位姿数据到CAN发送数据帧中
  * @param  x:    X轴坐标 (单位: m)

@@ -146,7 +146,7 @@ uint8_t is_error_little(int8_t error_x, int8_t error_y, uint8_t count)
 /*
  * @brief  【应用层】检查视觉误差是否足够小
  * @param  在main_task.c里调用，等待物料移动到指定位置（误差足够小）后再执行抓取动作
- * @note   连续满足2次条件才能返回1
+ * @note   连续满足4次条件才能返回1
  */
 uint8_t is_calibration_error_little(void)
 {
@@ -154,12 +154,42 @@ uint8_t is_calibration_error_little(void)
     const int16_t error_x = g_maxicam_info.error_x - target_x;
     const int16_t error_y = g_maxicam_info.error_y - target_y;
     
+    if (error_x < 1 && error_x > -1 &&
+        error_y < 1 && error_y > -1)
+    {
+        calibration_count++;
+        
+        if (calibration_count >= 6)
+        {
+            bsp_led_on(CORE_TWO);
+            return 1;
+        }
+    }
+    else
+    {
+        calibration_count = 0; // 误差较大，重置计数器
+    }
+    bsp_led_off(CORE_TWO);
+    return 0;
+}
+
+/*
+ * @brief  【应用层】检查物料识别视觉误差是否足够小
+ * @param  在main_task.c里调用，等待物料移动到指定位置（误差足够小）后再执行抓取动作
+ * @note   连续满足4次条件才能返回1
+ */
+uint8_t is_materials_calibration_error_little(void)
+{
+    static uint8_t calibration_count = 0;
+    const int16_t error_x = g_maxicam_info.error_x - materials_target_x;
+    const int16_t error_y = g_maxicam_info.error_y - materials_target_y;
+    
     if (error_x < 2 && error_x > -2 &&
         error_y < 2 && error_y > -2)
     {
         calibration_count++;
         
-        if (calibration_count >= 2)
+        if (calibration_count >= 6)
         {
             bsp_led_on(CORE_TWO);
             return 1;

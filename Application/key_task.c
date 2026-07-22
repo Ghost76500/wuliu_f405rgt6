@@ -23,20 +23,7 @@ void key_task(void *argument) {
             osDelay(200); // 延时200ms，等待夹爪动作完成
             //Motor_35_Move(Motor_35_DOWN, 52700);
             //bsp_gimbal_angle_set(GIMBAL_INIT_ANGLE); // 设置云台角度为初始角度
-            //X_V2_Read_Sys_Params(1, S_VEL);
-            //X_V2_Vel_Control(1, 0, 255, 100.0f, false); // 测试用：让电机1以1000速度运行，限流500mA
-            //can_send_chassis_speed(50, 100, 100, 100); // 测试用：发送底盘速度指令
-            //X_V2_Read_Sys_Params(1, S_VEL);
-            //chassis_set_control_target(0.0f, 0.0f, 0.1f);
-            /*
-            X_V2_En_Control(1, false, false); // 关闭电机
-            osDelay(1); // 给 CAN 总线一点时间处理发送，避免过快调用导致的拥堵
-            X_V2_En_Control(2, false, false); // 关闭电机
-            osDelay(1); // 给 CAN 总线一点时间处理发送，避免过快调用导致的拥堵
-            X_V2_En_Control(3, false, false); // 关闭电机
-            osDelay(1); // 给 CAN 总线一点时间处理发送，避免过快调用导致的拥堵
-            X_V2_En_Control(4, false, false); // 关闭电机
-*/
+         
             //zdt_motor_test(); // 测试用：控制ZDT电机运行
             // Update_OPS(0.3, 0.5, 1.0);
             //place_material(); // 测试用：执行放置物料动作
@@ -48,8 +35,14 @@ void key_task(void *argument) {
             //grab_materials_car(1, 0);
             //place_material();
             //grab_materials_ground(49,0);
-            put_materials_ground(49, 0);
+            //put_materials_ground(49, 0);
+            //Motor_28_Move(QIAN, WULIAOPAN_MATERIAL);
+            grab_turntable_C(51, 1); // 示例：抓取转盘C，数量为1
         }
         osDelay(10); // 延时10毫秒
   }
+}
+
+void jiaqu_test(void){
+    grab_materials_ground(50, 1); // 绿色，放到一号位
 }

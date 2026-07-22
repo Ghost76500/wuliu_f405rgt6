@@ -6,7 +6,7 @@
 
 #define MAXICAM_UART_HANDLE huart1
 
-// --- 这里我为你补充一个结构体，专门存解析好的数据，方便其他C文件调用 ---
+// maixcam解析好的数据
 typedef struct {
     uint8_t  mode;        // 模式 (物料0x0A, 色环0x3A等)
     uint8_t  color;       // 颜色 (红0x0A, 绿0x0B, 蓝0x0C等)

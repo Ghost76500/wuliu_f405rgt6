@@ -11,9 +11,11 @@
 #include "user_lib.h"
 
 
-const int16_t target_x = 8;  // 目标误差X
-const int16_t target_y = 7;  // 目标误差Y
+const int16_t target_x = 8;  // 目标误差X,变大往左
+const int16_t target_y = 12;  // 目标误差Y，变大往上
 
+const int16_t materials_target_x = 8;
+const int16_t materials_target_y = 12;
 
 /*
  * @brief 识别姿态
@@ -55,6 +57,21 @@ void grab_plate_material(void)
 }
 
 /*
+ * @brief 物料盘放物料
+ * @param order      1/2/3
+ * @retval void
+ */
+void put_plate_material(void)
+{
+    Motor_35_Move(Motor_35_DOWN, WULIAOPAN);
+    osDelay(300);
+    bsp_gripper_state_set(JIAZHUA_XIAO_OPEN);
+    osDelay(200);
+    Motor_35_Move(Motor_35_UP, WULIAOPAN);
+    osDelay(500);
+}
+
+/*
  * @brief 放置物料到车上
  * @param void
  * @retval void
@@ -62,13 +79,13 @@ void grab_plate_material(void)
 void place_material(void)
 {
     Motor_28_Move(QIAN, NAWULIAO_28); // 夹爪伸出
-    osDelay(200);
+    osDelay(300);
     Motor_35_Move(Motor_35_DOWN, YUNHUO);
     osDelay(200);
     bsp_gripper_state_set(JIAZHUA_XIAO_OPEN);
     osDelay(150);
     Motor_28_Move(HOU, NAWULIAO_28);
-    osDelay(200);
+    osDelay(300);
     Motor_35_Move(Motor_35_UP, YUNHUO);
     osDelay(200);
     
@@ -81,7 +98,7 @@ void place_material(void)
  */
 void grab_materials_ground(uint8_t color, uint8_t first)
 {
-    gimbal_turn(color, 1500); // 云台转到拿物料位置，7对应拿物料位置，放下夹爪
+    gimbal_turn(color, 1100); // 云台转到拿物料位置，7对应拿物料位置，放下夹爪
     switch (color)
     {
     case 50:
@@ -127,7 +144,7 @@ void grab_materials_ground(uint8_t color, uint8_t first)
 void grab_turntable_A(uint8_t color, uint8_t num)
 {
     osDelay(100);
-    gimbal_turn(7, 1800); // 云台转到拿物料位置，7对应拿物料位置，放下夹爪
+    gimbal_turn(7, 1400); // 云台转到拿物料位置，7对应拿物料位置，放下夹爪
     bsp_gripper_state_set(JIAZHUA_DA_OPEN); // 夹爪完全张开
     osDelay(100);
 
@@ -148,7 +165,7 @@ void grab_turntable_A(uint8_t color, uint8_t num)
     buzzer_rings(2000, 20, 100); // 物料移动到对应位置，蜂鸣器响一声
     
     grab_plate_material(); // 抓物料：降下夹爪抓物料
-    gimbal_turn(num, 1800); // 转到对应位置，num对应放置位置
+    gimbal_turn(num, 1400); // 转到对应位置，num对应放置位置
     place_material(); // 放置物料：1松开夹爪2恢复位置
 
     visual_idle(); // 再次发送停止信息，告诉maixcam停止识别
@@ -162,8 +179,8 @@ void grab_turntable_A(uint8_t color, uint8_t num)
  */
 void color_ring_calibration(uint8_t color)
 {
-    const fp32 error_to_speed = 0.00160f;
-    const fp32 max_speed = 0.0150f;
+    const fp32 error_to_speed = 0.00170f;
+    const fp32 max_speed = 0.0155f;
     const uint32_t control_period_ms = 50U;
     fp32 x_cmd = 0.0f;
     fp32 y_cmd = 0.0f;
@@ -175,10 +192,10 @@ void color_ring_calibration(uint8_t color)
     {
         yaw_hold = chassis->chassis_yaw;
     }
-    gimbal_turn(50, 1800); // 云台转到识别位置
+    gimbal_turn(50, 1400); // 云台转到识别位置
 
     Motor_35_Move(Motor_35_DOWN, SHIBIE); // 新增：降下夹爪到识别物料的位置
-    osDelay(500);
+    osDelay(300);
 
     bsp_gripper_state_set(JIAZHUA_DA_OPEN); // 夹爪完全张开，避免挡住摄像头视野
     osDelay(100);
@@ -210,10 +227,8 @@ void color_ring_calibration(uint8_t color)
         chassis_set_control_target(0.0f, 0.0f, yaw_hold);
         osDelay(control_period_ms);
         timeout++;
-        if (timeout > 100) // 大约5秒钟还没对准？算了，放弃微调，继续往下走正常抓取流程
-        {
-            break;
-        }
+        if (timeout > 120) // 大约6秒钟还没对准？算了，放弃微调，继续往下走正常抓取流程
+        { break;}
     }
     chassis_set_control_target(0.0f, 0.0f, yaw_hold);
     chassis_cmd_disable_yaw_hold();
@@ -235,7 +250,7 @@ void color_ring_calibration(uint8_t color)
  */
 void grab_materials_car(uint8_t order, uint8_t first)     //车上抓取物料
 {
-    gimbal_turn(order, 1700); // 云台转到拿物料位置
+    gimbal_turn(order, 1200); // 云台转到拿物料位置
     Motor_28_Move(QIAN, NAWULIAO_28); // 夹爪伸出
     bsp_gripper_state_set(JIAZHUA_XIAO_OPEN); // 夹爪张开一点
     osDelay(100);
@@ -258,7 +273,7 @@ void grab_materials_car(uint8_t order, uint8_t first)     //车上抓取物料
 */
 void put_materials_ground(uint8_t color, uint16_t none)     //地面放物料
 {
-    gimbal_turn(color, 1600); // 转到放置的位置
+    gimbal_turn(color, 1100); // 转到放置的位置
 
     switch (color)
     {
@@ -319,9 +334,11 @@ void put_materials_ground(uint8_t color, uint16_t none)     //地面放物料
  */
 void put_materials_car(uint8_t order)
 {
-    gimbal_turn(order, 1800); // 云台转到放物料位置
+    gimbal_turn(order, 1200); // 云台转到放物料位置
     place_material(); // 放置物料
 }
+
+
 
 /*
  * @brief 物料校准
@@ -356,7 +373,7 @@ void color_materials_calibration(uint8_t color, uint8_t mode)
     {
         yaw_hold = chassis->chassis_yaw;
     }
-    gimbal_turn(50, 1200);
+    gimbal_turn(50, 900);
     bsp_gripper_state_set(JIAZHUA_DA_OPEN); // 夹爪完全张开，避免挡住摄像头视野
     osDelay(100);
     visual_data_ready = 0;
@@ -387,7 +404,7 @@ void color_materials_calibration(uint8_t color, uint8_t mode)
 
         if (mode == 0)
         {
-            if ((ABS(error_x) > 50) || (ABS(error_y) > 160)) // 如果误差较大，不启用校准
+            if ((ABS(error_x) > 55) || (ABS(error_y) > 160)) // 如果误差较大，不启用校准
             {
                 x_cmd = 0;
                 y_cmd = 0;
@@ -435,7 +452,7 @@ void grab_turntable_B(uint8_t color, uint8_t num)
     
     grab_plate_material(); // 抓物料：降下夹爪抓物料
     //Motor_28_Move(HOU, WULIAOPAN_MATERIAL); // 夹爪收回,准备转
-    gimbal_turn(num, 1800); // 转到对应位置，num对应放置位置
+    gimbal_turn(num, 1200); // 转到对应位置，num对应放置位置
     place_material(); // 放置物料：1松开夹爪2恢复位置
 
     visual_idle(); // 再次发送停止信息，告诉maixcam停止识别
@@ -450,7 +467,7 @@ void grab_turntable_B(uint8_t color, uint8_t num)
  */
 void put_materials_materials(uint8_t color, uint16_t none)
 {
-    gimbal_turn(color, 1800); // 转到放置的位置
+    gimbal_turn(color, 1200); // 转到放置的位置
     switch (color)
     {
     case 4:
@@ -503,3 +520,141 @@ void put_materials_materials(uint8_t color, uint16_t none)
     }
     osDelay(200);
 }
+
+/*
+ * @brief 物料动态识别抓取伸长版C
+ * @param 1/2/3 红绿蓝
+ * @retval void
+*/
+void grab_turntable_C(uint8_t color, uint8_t num)
+{
+    osDelay(100);
+    //gimbal_turn(7, 2000); // 云台转到拿物料位置，7对应拿物料位置，放下夹爪
+    bsp_gripper_state_set(JIAZHUA_DA_OPEN); // 夹爪完全张开
+    Motor_28_Move(QIAN, WULIAOPAN_MATERIAL); // 夹爪伸出
+    osDelay(100);
+    
+    color_materials_calibration(color, 0);
+    
+    visual_idle(); // 发送停止信息，告诉maixcam停止识别
+    buzzer_rings(2000, 20, 100); // 物料移动到对应位置，蜂鸣器响一声
+    
+    const fp32 error_to_speed = 0.0013f;
+    const fp32 max_speed = 0.08f;
+    const uint32_t control_period_ms = 50U;
+    const int16_t max_visual_error_x = 160;
+    const int16_t max_visual_error_y = 120;
+    const int16_t initial_side_threshold = 10;
+    const int16_t cross_center_threshold = 5;
+    const uint8_t stable_count_required = 5U;
+    const uint8_t max_control_cycles = 120U;
+    fp32 x_cmd = 0.0f;
+    fp32 y_cmd = 0.0f;
+    fp32 yaw_hold = 0.0f;
+    const chassis_move_t *chassis = get_chassis_move_data();
+
+    const uint8_t arrow_error_x = 5U;
+    const uint8_t arrow_error_y = 5U;
+    uint8_t initial_side = 0U;
+    uint8_t y_axis_locked = 0U;
+    uint8_t stable_count = 0U;
+    uint8_t control_cycles = 0U;
+
+    enum
+    {
+        INITIAL_SIDE_UNKNOWN = 0,
+        INITIAL_SIDE_LEFT,
+        INITIAL_SIDE_RIGHT
+    };
+    
+    if (chassis != NULL)
+    {
+        yaw_hold = chassis->chassis_yaw;
+    }
+    gimbal_turn(50, 900);
+    bsp_gripper_state_set(JIAZHUA_DA_OPEN); // 夹爪完全张开，避免挡住摄像头视野
+    osDelay(100);
+    visual_data_ready = 0;
+    identify_materials(color);
+
+    while (visual_data_ready == 0)
+    {
+        osDelay(control_period_ms);
+    }
+
+    if (g_maxicam_info.error_x <= -initial_side_threshold)
+    {
+        initial_side = INITIAL_SIDE_LEFT;
+    }
+    else if (g_maxicam_info.error_x >= initial_side_threshold)
+    {
+        initial_side = INITIAL_SIDE_RIGHT;
+    }
+
+    position_disable(); // 关闭位置环，进入底盘速度控制模式
+    chassis_cmd_disable_world_frame(); // 关闭世界系，进入车体系控制
+
+    while (control_cycles < max_control_cycles)
+    {
+        int16_t error_x = g_maxicam_info.error_x;
+        int16_t error_y = g_maxicam_info.error_y;
+
+        // 底盘 x 轴为横向，y 轴为纵向；保持当前相机误差到速度的映射关系。
+        x_cmd = error_to_speed * (fp32)error_y;
+        y_cmd = error_to_speed * (fp32)error_x;
+
+        abs_limit(&x_cmd, max_speed);
+        abs_limit(&y_cmd, max_speed);
+        if ((ABS(error_x) > max_visual_error_x) ||
+            (ABS(error_y) > max_visual_error_y)) // 仅在坐标超出 320x240 画面时停止跟踪
+        {
+            x_cmd = 0;
+            y_cmd = 0;
+            stable_count = 0U;
+        }
+        else
+        {
+            if (((initial_side == INITIAL_SIDE_LEFT) && (error_x >= cross_center_threshold)) ||
+                ((initial_side == INITIAL_SIDE_RIGHT) && (error_x <= -cross_center_threshold)))
+            {
+                y_axis_locked = 1U;
+            }
+
+            if (y_axis_locked != 0U)
+            {
+                y_cmd = 0.0f;
+            }
+
+            if ((ABS(error_y) < arrow_error_y) &&
+                ((y_axis_locked != 0U) || (ABS(error_x) < arrow_error_x)))
+            {
+                stable_count++;
+                if (stable_count >= stable_count_required)
+                {
+                    break;
+                }
+            }
+            else
+            {
+                stable_count = 0U;
+            }
+        }
+        chassis_set_control_target(x_cmd, y_cmd, yaw_hold);
+        osDelay(control_period_ms);
+        control_cycles++;
+    }
+    
+    chassis_set_control_target(0.0f, 0.0f, yaw_hold);
+    chassis_cmd_disable_yaw_hold();
+    osDelay(100);
+    visual_idle();
+    osDelay(100);
+
+    Motor_28_Move(HOU, WULIAOPAN_MATERIAL); // 夹爪收回,准备转
+    gimbal_turn(num, 1200); // 转到对应位置，num对应放置位置
+    place_material(); // 放置物料：1松开夹爪2恢复位置
+
+    visual_idle(); // 再次发送停止信息，告诉maixcam停止识别
+    osDelay(100);
+}
+
