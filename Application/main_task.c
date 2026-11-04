@@ -37,10 +37,18 @@ static void get_task_code(void);
  */
 static void show_task_code(void);
 
+/*
+ * @brief 决赛抓取三个地面随机物料
+ * @param void
+ * @retval void
+ */
+void grab_three_ground_materials(uint8_t color, uint8_t first);
+
 /*-----------------------------------函数实现-----------------------------------*/
 
 void main_task(void *argument)
 {
+    while(1){osDelay(100);}
     osDelay(3000); // 任务启动延时，等待系统稳定，硬件复位
     can_chassis_ready_mode(); // 失能底盘can步进电机驱动板，调整位置
     bsp_gimbal_angle_set(GIMBAL_INIT_ANGLE); // 云台复位
@@ -72,19 +80,9 @@ void main_task(void *argument)
     osDelay(500);
     can_chassis_init(); // 使能底盘can步进电机驱动板
 
-    
-    //color_ring_calibration(50); // 校准色环
-        /*
-        //while(1){osDelay(100);}
-        grab_materials_car(1, 0);
-        put_materials_ground(tmp[0],0);
-        grab_materials_car(2, 0);
-		put_materials_ground(tmp[1],0);
-		grab_materials_car(3, 0);
-		put_materials_ground(tmp[2],0);*/
     for (;;)
     {
-        // while(1){osDelay(100);} // 无限循环
+        /* 初赛 */
         osDelay(10);
         Chassis_Go_Pos(-0.15, 0.15, QIANMIAN, 200); // 出库
         Motor_28_Move(HOU, WAITING); // 收回机械臂
@@ -103,13 +101,11 @@ void main_task(void *argument)
         Chassis_Go_Pos(-0.240, 1.076, ZUOBIAN, 200); // 跑图：二维码和物料盘之间的路口
 
         Chassis_Go_Pos(-1.904, 1.039, ZUOBIAN, 200); // 跑图：加工区
-        Chassis_Go_Pos(-1.974, 1.039, HOUMIAN, 200); // 转向朝下,准备加工物料
+        Chassis_Go_Pos(-1.974, 1.039, HOUMIAN, 200); //  111111转向朝下,准备加工物料
 
-//Chassis_Go_Pos(-1.960, 1.049, HOUMIAN, 200);
         // 这里是第一轮加工物料的代码
-        color_ring_calibration(50); // 校准色环
+        //color_ring_calibration(50); // 校准色环
         
-        //while(1){osDelay(100);}
         grab_materials_car(1, 0);
         put_materials_ground(color_task[0],0);
         grab_materials_car(2, 0);
@@ -126,15 +122,14 @@ void main_task(void *argument)
 
         reset_posture();
 
-        Update_OPS(-1.960, 1.049, 0.0); // 加工区更新坐标
-        //while(1){osDelay(100);}
+        //Update_OPS(-1.960, 1.049, 0.0); // 加工区更新坐标
 
         Chassis_Go_Pos(-1.887, 1.887, HOUMIAN, 200); // 跑图：地图左上角
         Chassis_Go_Pos(-1.887, 1.887, ZUOBIAN, 200); // 转向朝左
 //while(1){osDelay(100);}
-        Chassis_Go_Pos(-1.079, 1.965, ZUOBIAN, 200); // 放置区
+        Chassis_Go_Pos(-1.079, 1.965, ZUOBIAN, 200); // 22222放置区
 
-        color_ring_calibration(50); // 校准色环
+        //color_ring_calibration(50); // 校准色环
         // 这里是放物料的代码
         grab_materials_car(1, 0);
         put_materials_ground(color_task[0],0);
@@ -143,15 +138,11 @@ void main_task(void *argument)
 		grab_materials_car(3, 0);
 		put_materials_ground(color_task[2],0);
         reset_posture();
-        Update_OPS(-1.079, 1.965, 0.0); // 放置区更新坐标
+        //Update_OPS(-1.079, 1.965, 0.0); // 放置区更新坐标
 
         Chassis_Go_Pos(-0.163, 1.857, ZUOBIAN, 200); // 地图右上角
         Chassis_Go_Pos(-0.163, 1.857, QIANMIAN, 200); // 转向朝前
 
-        //Chassis_Go_Pos(-0.15, 0.15, QIANMIAN, 200); // 准备入库
-        //Chassis_Go_Pos(0.0, 0.0, QIANMIAN, 200); // 入库
-
-        //while(1){osDelay(100);}
         // 开始第二圈
         Chassis_Go_Pos(-0.122, 1.475, QIANMIAN, 200); // 拿物料位置
 
@@ -163,10 +154,10 @@ void main_task(void *argument)
         Chassis_Go_Pos(-0.240, 1.076, ZUOBIAN, 200); // 跑图：二维码和物料盘之间的路口
 
         Chassis_Go_Pos(-1.904, 1.039, ZUOBIAN, 200); // 跑图：加工区
-        Chassis_Go_Pos(-1.974, 1.039, HOUMIAN, 200); // 转向朝下，准备加工物料
+        Chassis_Go_Pos(-1.974, 1.039, HOUMIAN, 200); // 111111转向朝下，准备加工物料
 
         // 这里是第二轮加工物料的代码
-        color_ring_calibration(50); // 校准色环
+        //color_ring_calibration(50); // 校准色环
         
         //while(1){osDelay(100);}
         grab_materials_car(1, 0);
@@ -175,8 +166,6 @@ void main_task(void *argument)
 		put_materials_ground(color_task[5],0);
 		grab_materials_car(3, 0);
 		put_materials_ground(color_task[6],0);
-		
-        //while(1){osDelay(100);}
 
         grab_materials_ground(color_task[4],1);
 		put_materials_car(1);
@@ -188,7 +177,7 @@ void main_task(void *argument)
         Chassis_Go_Pos(-1.887, 1.887, HOUMIAN, 200); // 跑图：地图左上角
         Chassis_Go_Pos(-1.887, 1.887, ZUOBIAN, 200); // 转向朝左
 
-        Chassis_Go_Pos(-1.079, 1.965, ZUOBIAN, 200); // 放置区
+        Chassis_Go_Pos(-1.079, 1.965, ZUOBIAN, 200); // 22222放置区
 
         // 这里是放物料叠叠乐的代码
         color_materials_calibration(50, 1);
@@ -201,7 +190,7 @@ void main_task(void *argument)
 
         reset_posture();
 
-        Update_OPS(-1.079, 1.965, 0.0); // 放置区更新坐标
+        //Update_OPS(-1.079, 1.965, 0.0); // 放置区更新坐标
 
 
         Chassis_Go_Pos(-0.163, 1.857, ZUOBIAN, 200); // 地图右上角
@@ -236,6 +225,33 @@ static void show_task_code(void)
     osDelay(200);
 }
 
+void grab_three_ground_materials(uint8_t color, uint8_t first)
+{
+    // 开始识别物料
+    color_materials_calibration(color, 2);
+    osDelay(10);
+    if (visual_data_timeout == 0) // 如果视觉识别成功，直接返回
+    {
+        return;
+    }
+    // 输入识别中间物料的坐标
+
+    color_materials_calibration(color, 2);
+    osDelay(10);
+    if (visual_data_timeout == 0) // 如果视觉识别成功，直接返回
+    {
+        return;
+    }
+    // 输入识别右边物料的坐标
+    
+    color_materials_calibration(color, 2);
+}
+
+void put_final_plate_material(uint8_t color, uint8_t first)
+{
+    // 开始识别物料
+    color_materials_calibration(color, 1);
+}
 
 void grab_turntable_test(void)
 {

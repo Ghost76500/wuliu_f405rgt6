@@ -20,6 +20,7 @@ typedef struct {
 extern Maxicam_Info_t g_maxicam_info;
 
 extern uint8_t visual_data_ready; // 视觉数据就绪标志，供其他任务查询
+extern volatile uint8_t visual_data_timeout; // 视觉首帧等待超时标志，1表示本次识别超时
 
 extern void maixcam_data_unpack(uint8_t maixcam_data[10]); // 解析 Maxicam 数据包
 

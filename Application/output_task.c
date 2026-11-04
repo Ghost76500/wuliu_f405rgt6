@@ -46,7 +46,7 @@ void output_task(void *argument)
     {
         //chassis_data_send(&huart2); // 传入UART2句柄，发送底盘数据到上位机
 
-        output_draw_status_page();
+//        output_draw_status_page();
         osDelay(100);
     }
 }

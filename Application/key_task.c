@@ -37,7 +37,12 @@ void key_task(void *argument) {
             //grab_materials_ground(49,0);
             //put_materials_ground(49, 0);
             //Motor_28_Move(QIAN, WULIAOPAN_MATERIAL);
-            grab_turntable_C(51, 1); // 示例：抓取转盘C，数量为1
+            //grab_turntable_B(51, 1); // 示例：抓取转
+            bsp_gripper_state_set(JIAZHUA_CLOSE); // 夹爪
+            osDelay(1000);
+            Motor_35_Move(Motor_35_DOWN, DIMIAN);
+           
+            
         }
         osDelay(10); // 延时10毫秒
   }

@@ -15,22 +15,23 @@
 #define GIMBAL_TWO_ANGLE 2135 // 测试用占空比
 #define GIMBAL_THREE_ANGLE 1960 // 测试用占空比
 
-#define GIMBAL_BLUE_ANGLE 1280 // 蓝色位置占空比
+#define GIMBAL_BLUE_ANGLE 650 // 蓝色位置占空比
 #define GIMBAL_GREEN_ANGLE 955
-#define GIMBAL_RED_ANGLE 650
+#define GIMBAL_RED_ANGLE 1280
 
 #define GIMBAL_NAWULIAO_ANGLE 955
 
 
 /*夹爪指定状态宏定义*/
-#define JIAZHUA_ERROR 65
+#define JIAZHUA_ERROR 165
 #define JIAZHUA_INIT 660 - JIAZHUA_ERROR   // 夹爪初始状态占空比(未定义,随便填一个数字)
 #define JIAZHUA_CLOSE 660 - JIAZHUA_ERROR   // 夹爪闭合占空比(未定义,随便填一个数字)
 #define JIAZHUA_XIAO_OPEN 930 - JIAZHUA_ERROR   // 夹爪张开一点点占空比(未定义,随便填一个数字)
 #define JIAZHUA_DA_OPEN 1100 - JIAZHUA_ERROR   // 夹爪完全张开占空比
+#define JIAZHUA_TEST 510
 
 /*35步进上下移动丝杆宏定义*/
-#define MECHANICAL_ERROR_35 5000 // 机械误差补偿脉冲数，根据实际情况调整
+#define MECHANICAL_ERROR_35 6000 // 机械误差补偿脉冲数，根据实际情况调整
 
 #define YUNHUO 6500 + MECHANICAL_ERROR_35 // 大约0.7ms
 #define WULIAOPAN 21200 + MECHANICAL_ERROR_35 // 大约1.0s
@@ -44,8 +45,8 @@
 
 /*28步进伸缩夹爪脉冲宏定义*/
 #define GROUND_GREEN 0
-#define GROUND_RED 2150
-#define GROUND_BLUE 1690
+#define GROUND_RED 1690
+#define GROUND_BLUE 2150
 #define WULIAOPAN_MATERIAL 3300
 #define WAITING 1300
 

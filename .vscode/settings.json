@@ -3,6 +3,7 @@
     "cmake.preferredGenerators": [
         "Ninja"
     ],
+    "cmake.useVsDeveloperEnvironment": "never",
     "stm32cube-ide-clangd.path": "cube",
     "stm32cube-ide-clangd.arguments": [
         "starm-clangd",

@@ -11,6 +11,7 @@ extern osMessageQueueId_t maxicamQueueHandle;
 extern uint8_t maxicam_rx_data[];
 
 uint8_t visual_data_ready = 0; // 视觉数据就绪标志，供其他任务查询
+volatile uint8_t visual_data_timeout = 0; // 视觉首帧等待超时标志，供其他任务查询
 volatile float maxicam_pkt_hz = 0.0f; // Maxicam 数据包频率（Hz）
 
 static void maxicam_freq_detect(void);
