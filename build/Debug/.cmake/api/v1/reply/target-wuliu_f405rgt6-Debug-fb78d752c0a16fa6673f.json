@@ -209,7 +209,8 @@
 				43,
 				44,
 				45,
-				46
+				46,
+				47
 			]
 		},
 		{
@@ -406,7 +407,8 @@
 				43,
 				44,
 				45,
-				46
+				46,
+				47
 			]
 		},
 		{
@@ -420,7 +422,6 @@
 			"name" : "Object Libraries",
 			"sourceIndexes" : 
 			[
-				47,
 				48,
 				49,
 				50,
@@ -449,7 +450,8 @@
 				73,
 				74,
 				75,
-				76
+				76,
+				77
 			]
 		}
 	],
@@ -639,6 +641,12 @@
 			"backtrace" : 8,
 			"compileGroupIndex" : 0,
 			"path" : "Application/output_task.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 8,
+			"compileGroupIndex" : 0,
+			"path" : "Application/path_planning.c",
 			"sourceGroupIndex" : 0
 		},
 		{

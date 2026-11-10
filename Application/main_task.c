@@ -48,6 +48,9 @@ void grab_three_ground_materials(uint8_t color, uint8_t first);
 
 void main_task(void *argument)
 {
+    bsp_gimbal_angle_set(500);
+    osDelay(1500);
+    bsp_gimbal_angle_set(2500);
     while(1){osDelay(100);}
     osDelay(3000); // 任务启动延时，等待系统稳定，硬件复位
     can_chassis_ready_mode(); // 失能底盘can步进电机驱动板，调整位置
