@@ -38,10 +38,14 @@ void key_task(void *argument) {
             //put_materials_ground(49, 0);
             //Motor_28_Move(QIAN, WULIAOPAN_MATERIAL);
             //grab_turntable_B(51, 1); // 示例：抓取转
-            bsp_gripper_state_set(JIAZHUA_CLOSE); // 夹爪
-            osDelay(1000);
-            Motor_35_Move(Motor_35_DOWN, DIMIAN);
-           
+            //bsp_gripper_state_set(JIAZHUA_CLOSE); // 夹爪
+            //osDelay(1000);
+            //Motor_35_Move(Motor_35_DOWN, DIMIAN);
+            //bsp_gimbal_angle_set(500); // 设置云台角度为初始角度
+            //osDelay(2000); // 延时200ms，等待云台动作完成
+            //bsp_gimbal_angle_set(2500);
+            bsp_test_angle_set(650); // 设置测试舵机到初始位置
+            
             
         }
         osDelay(10); // 延时10毫秒

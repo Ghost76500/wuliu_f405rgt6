@@ -4,6 +4,8 @@
 #include "gm65.h"
 #include "bsp_usart.h"
 #include "visual_identity.h"
+#include "radar_uart_port.h"
+#include "radar_client.h"
 
 // 声明 CubeMX 里创建的各个独立队列句柄
 extern osMessageQueueId_t maxicamQueueHandle;
@@ -103,6 +105,27 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
         // 底层逻辑：让串口重新回到工作岗位，继续监听下一波数据
         HAL_UARTEx_ReceiveToIdle_DMA(&huart1, maxicam_rx_data, MAX_UART_FRAG_LEN);
         
+    }
+    else if (huart == RADAR_UART_HANDLE)
+    {
+        // 雷达串口只登记错误：保存错误码并置错误标志，
+        // DMA 重启、半帧清理和重新握手统一由 RadarClient_Poll()
+        // 在雷达任务上下文中按 100ms 限速恢复，不在中断里重启外设。
+        RadarClient_OnUartErrorInterrupt(huart->ErrorCode);
+    }
+}
+
+/**
+ * @brief  HAL库DMA发送完成回调
+ * @note   雷达串口只登记发送完成标志，发送队列的出队与下一帧启动
+ *         由 RadarClient_Poll() 完成；其他串口的发送完成直接忽略。
+ * @param  huart: 发送完成的串口句柄指针
+ */
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
+{
+    if (huart == RADAR_UART_HANDLE)
+    {
+        RadarClient_OnUartTxCompleteInterrupt();
     }
 }
 

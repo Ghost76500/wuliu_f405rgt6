@@ -9,14 +9,14 @@
 #define GIMBAL_MID_ANGLE 1500  // 中间占空比，对应180度
 #define GIMBAL_MAX_ANGLE 2500  // 最大占空比，对应360度
 
-#define GIMBAL_INIT_ANGLE 1960 // 初始位置占空比(未定义,随便填一个数字)
+#define GIMBAL_INIT_ANGLE 2300 // 初始位置占空比(未定义,随便填一个数字)
 
 #define GIMBAL_ONE_ANGLE 2305 // 云台转动一个角度对应的占空比增量 中间差170
 #define GIMBAL_TWO_ANGLE 2135 // 测试用占空比
 #define GIMBAL_THREE_ANGLE 1960 // 测试用占空比
 
 #define GIMBAL_BLUE_ANGLE 650 // 蓝色位置占空比
-#define GIMBAL_GREEN_ANGLE 955
+#define GIMBAL_GREEN_ANGLE 1012
 #define GIMBAL_RED_ANGLE 1280
 
 #define GIMBAL_NAWULIAO_ANGLE 955

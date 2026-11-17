@@ -51,8 +51,8 @@
 osThreadId_t defaultTaskHandle;
 const osThreadAttr_t defaultTask_attributes = {
   .name = "defaultTask",
-  .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityNormal,
+  .stack_size = 512 * 4,
+  .priority = (osPriority_t) osPriorityLow,
 };
 /* Definitions for CHASSIS_TASK */
 osThreadId_t CHASSIS_TASKHandle;
@@ -103,6 +103,13 @@ const osThreadAttr_t OUTPUT_TASK_attributes = {
   .stack_size = 1024 * 4,
   .priority = (osPriority_t) osPriorityLow3,
 };
+/* Definitions for RADAR_TASK */
+osThreadId_t RADAR_TASKHandle;
+const osThreadAttr_t RADAR_TASK_attributes = {
+  .name = "RADAR_TASK",
+  .stack_size = 2048 * 4,
+  .priority = (osPriority_t) osPriorityBelowNormal3,
+};
 /* Definitions for KeyQueue */
 osMessageQueueId_t KeyQueueHandle;
 const osMessageQueueAttr_t KeyQueue_attributes = {
@@ -127,6 +134,7 @@ extern void uart_rx_task(void *argument);
 extern void music_task(void *argument);
 extern void key_task(void *argument);
 extern void output_task(void *argument);
+extern void radar_task(void *argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
@@ -187,6 +195,9 @@ void MX_FREERTOS_Init(void) {
 
   /* creation of OUTPUT_TASK */
   OUTPUT_TASKHandle = osThreadNew(output_task, NULL, &OUTPUT_TASK_attributes);
+
+  /* creation of RADAR_TASK */
+  RADAR_TASKHandle = osThreadNew(radar_task, NULL, &RADAR_TASK_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */

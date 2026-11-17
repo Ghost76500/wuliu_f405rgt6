@@ -45,6 +45,7 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 file(GLOB_RECURSE USER_SOURCES "User/*.c")
 file(GLOB_RECURSE APP_SOURCES "Application/*.c")
 file(GLOB_RECURSE BSP_SOURCES "Bsp/*.c")
+file(GLOB_RECURSE RADAR_SOURCES "Radar/*.c")
 file(GLOB_RECURSE TASK_SOURCES "Task/*.s")
 
 # Add sources to executable
@@ -53,7 +54,9 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     ${USER_SOURCES}
     ${APP_SOURCES}
     ${BSP_SOURCES}
+    ${RADAR_SOURCES}  
     ${TASK_SOURCES}
+    Application/radar_task.c
 )
 
 # Add include paths
@@ -62,6 +65,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     User
     Application
     Bsp
+    Radar
     Task
 )
 

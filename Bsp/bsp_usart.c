@@ -39,8 +39,8 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
     if (huart->Instance == UART4)
     {
         // 重新启动UART4 DMA接收 关闭
-        HAL_UARTEx_ReceiveToIdle_DMA(&huart4, zdt_rx_data, sizeof(zdt_rx_data));
-        __HAL_DMA_DISABLE_IT(huart4.hdmarx, DMA_IT_HT);
+        //HAL_UARTEx_ReceiveToIdle_DMA(&huart4, zdt_rx_data, sizeof(zdt_rx_data));
+        //__HAL_DMA_DISABLE_IT(huart4.hdmarx, DMA_IT_HT);
     }
 
     if (huart->Instance == USART1)

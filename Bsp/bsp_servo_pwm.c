@@ -28,7 +28,7 @@ void bsp_test_angle_set(uint16_t duty)
  */
 void bsp_gimbal_angle_set(uint16_t duty)
 {
-    // 范围是500到2500，对应0到360度
+    // 范围是500到2500，对应0到270度
     if (duty < 500) duty = 500;
     if (duty > 2500) duty = 2500;
 
