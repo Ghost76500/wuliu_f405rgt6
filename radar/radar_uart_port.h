@@ -8,7 +8,7 @@
 
 /* USART1 is the radar module link. USART2 is the optional demo console.
  * Keep USART1 at 115200 8N1, RX DMA circular, TX DMA normal. */
-#define RADAR_UART_HANDLE       (&huart4)
+#define RADAR_UART_HANDLE       (&huart2)
 // #define RADAR_DEBUG_UART_HANDLE (&huart2)
 
 bool RadarUartPort_StartReceive(uint8_t *buffer, uint16_t length);

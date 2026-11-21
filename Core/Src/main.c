@@ -32,6 +32,7 @@
 #include "bsp_can.h"
 #include "bsp_servo_pwm.h"
 #include "OLED.h"
+#include "radar_task.h"
 
 /* USER CODE END Includes */
 
@@ -114,7 +115,7 @@ int main(void)
   can_filter_init(); // 初始化CAN接收
   bsp_servo_pwm_init(); // 初始化云台和夹爪舵机PWM
   OLED_Init(); // 初始化OLED显示屏
-
+  RadarBridge_CreateQueues();
   // DWT_Delay_Init(); // 初始化DWT延时函数
   
   /* USER CODE END 2 */

@@ -57,6 +57,8 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     ${RADAR_SOURCES}  
     ${TASK_SOURCES}
     Application/radar_task.c
+    Application/radar_task.h
+    Application/test_radar_task.c
 )
 
 # Add include paths
